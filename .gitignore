@@ -1,0 +1,21 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Runtime/cache
+cache/
+tmp/
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# VS Code local settings
+.vscode/
+
+# Composer dependencies
+/vendor/
