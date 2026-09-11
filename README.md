@@ -1,137 +1,214 @@
-# FastTracker Poker
+# ♠ FastTracker Poker
 
-A complete browser-based poker system built for **TorrentTrader / TTv3**, featuring multiplayer poker, tournament play, and private single-player games against the house.
+A full browser-based Texas Hold'em poker system built for **TorrentTrader / TTv3**.
 
-FastTracker Poker integrates directly with the tracker's existing user accounts and upload-credit economy, allowing members to use their upload credit as poker chips without requiring a separate currency or account system.
+FastTracker Poker adds multiplayer poker, tournament play, and private single-player games against the house directly to a TorrentTrader community. It integrates with the existing user system and uses tracker **upload credit as poker chips**.
 
-![FastTracker Poker Lobby](screenshots/poker-lobby.webp)
+![FastTracker Multiplayer Poker](screenshots/poker-table.webp)
 
-## 🎰 Three Ways to Play
+## 🎰 Poker for TorrentTrader
 
-### Multiplayer Poker
+FastTracker Poker was built as an integrated entertainment system for TorrentTrader rather than a standalone poker server.
 
-Create traditional player-versus-player poker tables with support for up to **10 players per table**.
+Players use their existing tracker account and upload credit to buy into games. No separate poker account or virtual currency system is required.
 
-Players can join an open seat, watch games as spectators, buy in using upload credit, and compete against other tracker members in real time.
+The system provides three different ways to play:
 
-### Tournament Poker
+### ♠ Multiplayer Poker
 
-Run organized poker tournaments with:
+Traditional player-versus-player Texas Hold'em with support for up to **10 players per table**.
 
-- Player registration
-- Tournament entry fees
-- Prize pools
-- Tournament blinds
-- Player limits
-- Spectator support
-- Administrative tournament controls
+Players can take an open seat, buy in using upload credit, chat with the table, watch as spectators, sit out, and compete against other tracker members.
 
-### The Collector — House Poker
+### 🏆 Tournament Poker
 
-Players can also play privately against **The Collector**, the FastTracker house opponent.
+Create organized poker tournaments with player registration, entry requirements, prize pools, configurable blinds, player limits, spectators, and administrative tournament controls.
 
-Each player receives their own independent house game, allowing multiple members to play against the house simultaneously without interfering with one another.
+### ☠ The Collector
+
+Don't have anyone online to play against?
+
+Take on **The Collector**.
+
+The Collector is the server-controlled house opponent. Each player receives an independent heads-up game, allowing multiple members to play against the house simultaneously.
+
+The house does not have access to the player's hidden cards.
 
 ---
 
-## ♠ Features
+## ✨ Features
 
-- 10-seat multiplayer poker tables
-- Single-player house poker
-- Tournament system
+- Texas Hold'em poker
+- Up to 10 players per multiplayer table
+- Multiplayer player-versus-player games
+- Tournament poker
+- Single-player heads-up games against The Collector
+- Existing TorrentTrader account integration
 - Upload credit used as poker chips
+- MB and GB stakes
 - Configurable small and big blinds
 - Configurable minimum and maximum buy-ins
-- MB / GB credit support
+- Per-table blind configuration
+- Tournament-style blind increases
 - Raise-to betting controls
+- All-in support
 - Player turn countdown
 - Automatic fold/check on timeout
 - Reconnect grace period
+- Sit-out support
 - Spectator mode
-- Live spectator count
-- Poker chat
+- Live spectator counts
+- Integrated table chat
 - Game sounds
-- Room ambience with on/off control
+- Optional room ambience
 - Player statistics
 - Poker leaderboard
 - Player profiles
+- Live poker lobby
+- Automatic lobby updates
 - Administrative table management
 - Tournament administration
 - Poker maintenance mode
-- Responsive live lobby
-- Automatic lobby updates
 
 ---
 
-## 🎮 Poker Lobby
+## 🖥 Poker Lobby
 
-The lobby provides a single location for every available game.
+The Poker Lobby provides a central view of all available games.
 
-Multiplayer, tournament, and house tables are separated into their own sections with live information including:
+![FastTracker Poker Lobby](screenshots/poker-lobby.webp)
+
+Multiplayer tables, tournaments, and house games are separated into their own sections while still being accessible from one screen.
+
+The lobby displays live information including:
 
 - Players seated
 - Spectators watching
-- Blinds
+- Table blinds
 - Buy-in limits
 - Current hand
 - Table status
 - Tournament registration
-- Prize pools
+- Tournament prize pools
+- Available upload credit
 
-The player's available upload credit is displayed directly in the lobby.
+The lobby automatically refreshes table information while the player remains on the page.
 
 ---
 
-## 💰 Upload Credit Economy
+## 💰 Upload Credit as Poker Chips
 
-FastTracker Poker does not require a separate virtual currency.
+FastTracker Poker integrates directly with the TorrentTrader upload-credit economy.
 
-The system uses the member's existing **TorrentTrader upload credit** as poker chips.
+A member's existing upload credit becomes their available poker bankroll.
 
-Table administrators can configure:
+This allows tables ranging from extremely small MB games to high-stakes GB games without introducing a second currency system.
+
+Administrators can configure each table's:
 
 - Small blind
 - Big blind
 - Minimum buy-in
 - Maximum buy-in
-- Tournament entry requirements
+- Number of seats
+- Blind escalation
 
-Low-stakes tables can operate using MB while larger games can use GB-sized stakes.
+Players cannot wager more credit than they have committed to the table.
+
+---
+
+## 🎮 Multiplayer Tables
+
+![FastTracker Multiplayer Poker Table](screenshots/poker-table.webp)
+
+The poker table provides the complete game interface, including:
+
+- Player seats and stacks
+- Community cards
+- Pot display
+- Fold, check, call, raise and all-in controls
+- Raise-to wagering
+- Current hand information
+- Table status
+- Player upload-credit balance
+- Table chat
+- Spectator information
+- Sit-out controls
+- Game sounds
+- Room ambience
+- Direct return to the Poker Lobby
+
+Games update dynamically without requiring players to manually reload the page.
 
 ---
 
 ## 👁 Spectator Mode
 
-Members don't have to play to participate.
+Members can watch active multiplayer and tournament tables without occupying a seat.
 
-Users can watch active poker tables without occupying a seat. Spectator counts are displayed in the lobby, and spectators can take an available seat when appropriate.
+The number of spectators is displayed directly in the table and lobby interfaces.
+
+Spectators can follow the game and take an available seat when appropriate.
+
+---
+
+## 💬 Table Chat
+
+Each multiplayer poker table includes its own integrated chat.
+
+Players can communicate without leaving the game, while administrative controls allow poker staff to clear table chat when necessary.
+
+---
+
+## 🔊 Sounds & Ambience
+
+Poker includes game sounds and optional room ambience to give tables more of a casino-room atmosphere.
+
+Players can independently enable or disable:
+
+- Game sounds
+- Room ambience
+
+These controls are available directly from the poker interface.
 
 ---
 
 ## 🏆 Player Statistics & Leaderboard
 
-FastTracker Poker tracks player performance and provides dedicated player profiles and a site-wide leaderboard.
+FastTracker Poker includes persistent player statistics and a site-wide poker leaderboard.
 
-Players can follow their poker history and compare their performance with other members.
+Members can view their poker profile and compare their performance with other players in the community.
 
 ---
 
-## 🔧 Administration
+## 🔧 Poker Administration
 
-Poker administrators can manage the system through the integrated Poker Admin Manager.
+![FastTracker Poker Admin Manager](screenshots/poker-admin.webp)
 
-Administration includes:
+The integrated **Poker Admin Manager** provides centralized control over the poker system.
 
-- Create and delete tables
-- Configure blinds
-- Configure buy-in limits
+Administrators can:
+
+- Create multiplayer tables
+- Create house tables
+- Configure table names
+- Configure minimum and maximum buy-ins
+- Select MB or GB buy-in units
+- Configure starting blinds
+- Configure blind escalation
+- Configure player capacity
 - Manage tournaments
 - Start tournaments
-- Clear poker chat
-- Control poker maintenance mode
-- Manage table availability
+- Clear table chat
+- Inspect poker activity
+- Delete tables
+- Enable or disable poker maintenance mode
 
-Maintenance mode allows administrators to gracefully take the poker system offline while allowing active players to finish and cash out.
+### Maintenance Mode
+
+Maintenance mode allows administrators to take the poker system offline without abruptly terminating active games.
+
+When maintenance is enabled, existing tables can gracefully drain so players have an opportunity to finish their games and cash out.
 
 ---
 
@@ -139,32 +216,51 @@ Maintenance mode allows administrators to gracefully take the poker system offli
 
 FastTracker Poker is designed for integration with a **TorrentTrader / TTv3** installation.
 
-Typical environment:
+Typical requirements include:
 
-- PHP 7.4 or newer
+- PHP 7.4+
 - PHP 8.x compatible
-- MySQL / MariaDB
-- JavaScript-enabled modern browser
-- Existing TorrentTrader user database and authentication system
+- MySQL or MariaDB
+- MySQLi
+- JavaScript-enabled modern desktop browser
+- Existing TorrentTrader user authentication
+- Existing TorrentTrader upload-credit system
 
-The current code has been developed and tested with modern PHP 8.x environments.
+The poker system is intended primarily for desktop use.
 
 ---
 
 ## 📦 Installation
 
-FastTracker Poker is an integrated TorrentTrader module rather than a standalone poker server.
+FastTracker Poker is an integrated TorrentTrader module and expects access to the existing TorrentTrader environment.
 
-Installation generally consists of:
+General installation consists of:
 
-1. Copying the poker files into the TorrentTrader installation.
-2. Importing the supplied poker SQL schema.
-3. Installing the supplied images and audio assets.
-4. Verifying the required TorrentTrader includes and database connection.
-5. Configuring poker administration permissions.
-6. Creating the desired poker tables through the Poker Admin Manager.
+1. Copy the poker files into the TorrentTrader installation.
+2. Import the supplied poker SQL schema into the TorrentTrader database.
+3. Install the supplied poker images and audio assets.
+4. Verify the TorrentTrader database and authentication includes.
+5. Configure the required poker administrator permission level.
+6. Open the Poker Admin Manager.
+7. Create the desired multiplayer, tournament, and house tables.
 
-**Database tables are installed using the supplied SQL file and are not automatically created by PHP.**
+### Database Installation
+
+Database schema changes are supplied as SQL and should be imported manually.
+
+**FastTracker Poker does not automatically create its database tables from PHP.**
+
+This keeps database changes explicit and allows the site administrator to review the schema before installation.
+
+---
+
+## 🔒 Intended Use
+
+FastTracker Poker was created as an entertainment feature for private TorrentTrader communities.
+
+Poker chips represent tracker upload credit only.
+
+**Upload credit and poker chips have no real-world monetary value.**
 
 ---
 
@@ -172,17 +268,15 @@ Installation generally consists of:
 
 ### Poker Lobby
 
-![FastTracker Poker Lobby](screenshots/poker-lobby.webp)
+![Poker Lobby](screenshots/poker-lobby.webp)
 
-Additional screenshots of multiplayer games, tournaments, The Collector, and administration can be added here.
+### Multiplayer Table
 
----
+![Multiplayer Poker](screenshots/poker-table.webp)
 
-## 🔒 Intended Use
+### Poker Admin Manager
 
-FastTracker Poker was designed as an integrated entertainment feature for private TorrentTrader communities.
-
-Poker chips represent tracker upload credit and have no real-world monetary value.
+![Poker Administration](screenshots/poker-admin.webp)
 
 ---
 
@@ -190,4 +284,4 @@ Poker chips represent tracker upload credit and have no real-world monetary valu
 
 **Multiplayer. Tournaments. The Collector.**
 
-Built for TTv3.
+Built for **TorrentTrader / TTv3**.
