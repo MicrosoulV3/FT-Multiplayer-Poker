@@ -2,17 +2,16 @@
 
 A full browser-based Texas Hold'em poker system built for **TorrentTrader / TTv3**.
 
-FastTracker Poker adds multiplayer poker, tournament play, and private single-player games against the house directly to a TorrentTrader community. It integrates with the existing user system and uses tracker **upload credit as poker chips**.
+FastTracker Poker adds multiplayer poker, tournament play, and private single-player games against the house. It integrates with the existing user system and uses tracker **upload credit as poker chips**.
 
 ![FastTracker Multiplayer Poker](screenshots/poker-table.webp)
 
 ## 🎰 Poker for TorrentTrader
 
-FastTracker Poker was built as an integrated entertainment system for TorrentTrader rather than a standalone poker server.
 
-Players use their existing tracker account and upload credit to buy into games. No separate poker account or virtual currency system is required.
+Players use their upload credit to buy into games.
 
-The system provides three different ways to play:
+three different ways to play:
 
 ### ♠ Multiplayer Poker
 
@@ -32,7 +31,6 @@ Take on **The Collector**.
 
 The Collector is the server-controlled house opponent. Each player receives an independent heads-up game, allowing multiple members to play against the house simultaneously.
 
-The house does not have access to the player's hidden cards.
 
 ---
 

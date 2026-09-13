@@ -3,6 +3,8 @@ FastTracker Poker
 
 INSTALLATION
 
+File structure is maintained. Upload all files (NOT THE SQL FOLDER) to site root.
+
 After installing the poker files and database, link your site's Poker
 menu/button directly to:
 
