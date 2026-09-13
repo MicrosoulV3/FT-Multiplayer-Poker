@@ -461,6 +461,26 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         border-radius: 2px;
     }
 
+
+    /* House-game dealing is staged visually instead of painting every card at once. */
+    #modern-poker img.house-card-deal {
+        opacity: 0;
+        transform: translateY(-18px) rotate(-2deg) scale(.97);
+        animation: houseCardDealIn .22s ease-out forwards;
+        will-change: transform, opacity;
+    }
+
+    @keyframes houseCardDealIn {
+        from {
+            opacity: 0;
+            transform: translateY(-18px) rotate(-2deg) scale(.97);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) rotate(0deg) scale(1);
+        }
+    }
+
     #modern-poker .bet-chip {
         position: absolute;
         min-width: 52px;
@@ -1671,6 +1691,10 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         var statusErrorTimer = null;
         var houseThinkTimer = null;
         var houseBrokeShown = false;
+        var housePresentationHand = 0;
+        var houseHoleRevealAt = {};
+        var houseBoardRevealAt = [];
+        var houseOutcomeRevealAt = 0;
         var soundEnabled = localStorage.getItem('pokerSoundEnabled') !== '0';
         var pokerUserId = root.getAttribute('data-user-id') || '0';
         var ambienceStorageKey = 'pokerAmbienceEnabled_' + pokerUserId;
@@ -1817,19 +1841,41 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 playSound('shuffle');
                 window.setTimeout(function() {
                     // Two hole cards are physically laid down for every active player.
-                    playCardPlacement(Math.max(1, occupiedCount(state) * 2), 120);
+                    playCardPlacement(Math.max(1, occupiedCount(state) * 2), 325);
                 }, 300);
                 return;
             }
 
             var oldStreet = String(previous.table.street || '').toLowerCase();
             var newStreet = String(state.table.street || '').toLowerCase();
+            var isHouse = state.table.game_type === 'house';
+            var oldBoardCount = previous.table.community && previous.table.community.length
+                ? previous.table.community.length
+                : 0;
+            var newBoardCount = state.table.community && state.table.community.length
+                ? state.table.community.length
+                : 0;
+            var houseBoardSound = false;
 
-            if (newStreet !== oldStreet) {
+            if (isHouse && newBoardCount > oldBoardCount) {
+                houseBoardSound = true;
+
+                if (oldBoardCount === 0 && newBoardCount >= 5) {
+                    window.setTimeout(function() { playCardPlacement(3, 275); }, 250);
+                    window.setTimeout(function() { playCardPlacement(1, 325); }, 1450);
+                    window.setTimeout(function() { playCardPlacement(1, 325); }, 2100);
+                } else {
+                    window.setTimeout(function() {
+                        playCardPlacement(newBoardCount - oldBoardCount, 275);
+                    }, 250);
+                }
+            }
+
+            if (!houseBoardSound && newStreet !== oldStreet) {
                 if (newStreet === 'flop') {
-                    playCardPlacement(3, 125);
+                    playCardPlacement(3, 275);
                 } else if (newStreet === 'turn' || newStreet === 'river') {
-                    playCardPlacement(1, 120);
+                    playCardPlacement(1, 325);
                 }
             }
 
@@ -2667,16 +2713,93 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             return el;
         }
 
-        function makeHole(seatNo, cards) {
+        function houseDealCard(img, revealAt) {
+            var remaining = Math.max(0, parseInt(revealAt || 0, 10) - Date.now());
+            if (remaining <= 0) return;
+            img.classList.add('house-card-deal');
+            img.style.animationDelay = remaining + 'ms';
+        }
+
+        function prepareHousePresentation(previous, state) {
+            if (!state || !state.table || state.table.game_type !== 'house') return;
+
+            var handNo = parseInt(state.table.hand_no || 0, 10);
+            var oldHandNo = previous && previous.table ? parseInt(previous.table.hand_no || 0, 10) : 0;
+            var now = Date.now();
+
+            if (handNo > 0 && handNo !== housePresentationHand) {
+                housePresentationHand = handNo;
+                houseHoleRevealAt = {};
+                houseBoardRevealAt = [];
+                houseOutcomeRevealAt = 0;
+
+                if (handNo > oldHandNo) {
+                    var dealer = parseInt(state.table.dealer_seat || 0, 10);
+                    var firstSeat = dealer === 8 ? 3 : 8;
+                    var secondSeat = firstSeat === 3 ? 8 : 3;
+                    var first = now + 300;
+                    var gap = 325;
+
+                    houseHoleRevealAt[firstSeat + ':0'] = first;
+                    houseHoleRevealAt[secondSeat + ':0'] = first + gap;
+                    houseHoleRevealAt[firstSeat + ':1'] = first + (gap * 2);
+                    houseHoleRevealAt[secondSeat + ':1'] = first + (gap * 3);
+                }
+            }
+
+            var oldBoard = previous && previous.table && Array.isArray(previous.table.community)
+                ? previous.table.community.length
+                : 0;
+            var newBoard = Array.isArray(state.table.community)
+                ? state.table.community.length
+                : 0;
+
+            if (newBoard > oldBoard) {
+                var start = now + 250;
+
+                /*
+                 * A House all-in can resolve the whole board on the server in one
+                 * response.  Keep that authoritative result, but reveal it like a
+                 * real deal: flop, pause, turn, pause, river.
+                 */
+                if (oldBoard === 0 && newBoard >= 5) {
+                    houseBoardRevealAt[0] = start;
+                    houseBoardRevealAt[1] = start + 275;
+                    houseBoardRevealAt[2] = start + 550;
+                    houseBoardRevealAt[3] = start + 1200;
+                    houseBoardRevealAt[4] = start + 1850;
+                    houseOutcomeRevealAt = start + 2250;
+                    window.setTimeout(fetchState, Math.max(0, houseOutcomeRevealAt - now) + 50);
+                } else {
+                    for (var i = oldBoard; i < newBoard; i++) {
+                        houseBoardRevealAt[i] = start + ((i - oldBoard) * 275);
+                    }
+                    if (state.table.status === 'showdown') {
+                        houseOutcomeRevealAt = houseBoardRevealAt[newBoard - 1] + 400;
+                        window.setTimeout(fetchState, Math.max(0, houseOutcomeRevealAt - now) + 50);
+                    }
+                }
+            }
+
+            if (state.table.status === 'showdown' && houseOutcomeRevealAt === 0) {
+                houseOutcomeRevealAt = now + 450;
+                window.setTimeout(fetchState, 500);
+            }
+        }
+
+        function makeHole(seatNo, cards, isHouse) {
             if (!cards || !cards.length) return null;
             var el = document.createElement('div');
             el.className = 'hole';
             el.style.left = handPositions[seatNo][0] + 'px';
             el.style.top = handPositions[seatNo][1] + 'px';
-            cards.forEach(function(card) {
+            cards.forEach(function(card, cardIndex) {
                 var img = document.createElement('img');
                 img.src = cardUrl(card);
                 img.alt = card === 'BACK' ? 'Face-down card' : card;
+                if (isHouse) {
+                    houseDealCard(img, houseHoleRevealAt[seatNo + ':' + cardIndex] || 0);
+                }
                 el.appendChild(img);
             });
             return el;
@@ -2881,6 +3004,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
         function render(state) {
             var previousState = lastState;
+            var isHouse = state.table.game_type === 'house';
+            prepareHousePresentation(previousState, state);
             soundForStateChange(previousState, state);
             lastState = state;
 
@@ -2892,7 +3017,6 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             });
             document.getElementById('community').innerHTML = '';
 
-            var isHouse = state.table.game_type === 'house';
             document.getElementById('historyOpen').hidden = isHouse;
             var seatLimit = Math.max(2, Math.min(10, parseInt(state.table.max_seats || 10, 10)));
             var seatsToRender = isHouse ? [3, 8] : [];
@@ -2904,7 +3028,17 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 var s = state.seats[i];
                 tableEl.appendChild(makeSeat(i, s));
                 if (s) {
-                    var hole = makeHole(i, s.cards);
+                    var displayedCards = s.cards;
+                    if (
+                        isHouse &&
+                        i === 3 &&
+                        state.table.status === 'showdown' &&
+                        houseOutcomeRevealAt > Date.now() &&
+                        displayedCards && displayedCards.length
+                    ) {
+                        displayedCards = ['BACK', 'BACK'];
+                    }
+                    var hole = makeHole(i, displayedCards, isHouse);
                     if (hole) tableEl.appendChild(hole);
                     if (s.round_bet > 0) {
                         var bet = document.createElement('div');
@@ -2932,10 +3066,13 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 addBlindButton('BB', blindSeats.bb);
             }
 
-            state.table.community.forEach(function(card) {
+            state.table.community.forEach(function(card, cardIndex) {
                 var img = document.createElement('img');
                 img.src = cardUrl(card);
                 img.alt = card;
+                if (isHouse) {
+                    houseDealCard(img, houseBoardRevealAt[cardIndex] || 0);
+                }
                 document.getElementById('community').appendChild(img);
             });
             document.getElementById('uploadCredit').textContent = state.me.total_credit_text;
@@ -2968,6 +3105,16 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             });
 
             var tableMessage = state.table.message || '';
+
+            if (
+                isHouse &&
+                state.table.status === 'showdown' &&
+                houseOutcomeRevealAt > Date.now()
+            ) {
+                tableMessage = state.table.community && state.table.community.length
+                    ? 'Dealing the board...'
+                    : 'The Collector is settling the hand...';
+            }
 
             var playersNeeded = isHouse ? 1 : 2;
             if (seatedPlayers >= playersNeeded && (tableMessage === 'Waiting for players.' || tableMessage === 'Waiting for a player to challenge The Collector.')) {
@@ -3107,7 +3254,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     if (!busy && lastState && lastState.table.game_type === 'house') {
                         post('house_tick', {});
                     }
-                }, 700 + Math.floor(Math.random() * 650));
+                }, 1200 + Math.floor(Math.random() * 900));
             }
 
             var moveButtons = document.querySelectorAll('#modern-poker .move');
