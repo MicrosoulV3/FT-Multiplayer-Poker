@@ -1379,6 +1379,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         background: transparent;
         box-shadow: none;
         filter: drop-shadow(0 7px 9px rgba(0,0,0,.78));
+        transform: translateX(-18px);
     }
     #modern-poker .seat.collector-seat .username {
         display: none;
@@ -1397,6 +1398,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         text-align: center;
         white-space: nowrap;
         box-shadow: 0 3px 8px rgba(0,0,0,.7);
+        transform: translateX(-55px);
     }
     #modern-poker .seat.collector-seat .seat-state {
         bottom: -34px;
