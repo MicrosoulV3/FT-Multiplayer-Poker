@@ -1307,8 +1307,8 @@ function poker_join($db, $tableId, $seatNo, $buyin, $user)
         if ($isHouse) {
             $botSeat = poker_house_bot_seat();
             $botUserId = 0;
-            $botName = 'House Bot';
-            $botAvatar = '';
+            $botName = 'The Collector';
+            $botAvatar = 'images/poker/the-collector.webp';
             $botStack = max((int) $table['max_buyin'], $buyin);
             $stmt = $db->prepare("INSERT INTO poker_seats
                 (table_id,seat_no,user_id,username,avatar,stack,round_bet,hand_contribution,hand_state,acted,hole1,hole2,sitting_out,last_seen_at,reconnect_grace_until,reconnect_grace_used)
@@ -3313,7 +3313,7 @@ function poker_house_default_state($table, $playerStack)
         'deck' => array(),
         'community' => array(),
         'hand_no' => 0,
-        'message' => 'And?...you waiting for something special?',
+        'message' => 'Ready when you are...',
         'session_buyin' => (int)$playerStack,
         'player' => array(
             'stack' => (int)$playerStack,
@@ -3534,8 +3534,8 @@ function poker_house_start_session_hand($db, $templateId, $userId)
         $sbPaid = poker_house_pay($state[$dealerKey], $smallBlind);
         $bbPaid = poker_house_pay($state[$bbKey], $bigBlind);
         $state['current_bet'] = max($sbPaid, $bbPaid);
-        poker_house_log($state, $state['dealer_seat'], $dealerKey === 'player' ? $row['username'] : 'House Bot', 'small blind', $sbPaid);
-        poker_house_log($state, $state['dealer_seat'] === poker_house_player_seat() ? poker_house_bot_seat() : poker_house_player_seat(), $bbKey === 'player' ? $row['username'] : 'House Bot', 'big blind', $bbPaid);
+        poker_house_log($state, $state['dealer_seat'], $dealerKey === 'player' ? $row['username'] : 'The Collector', 'small blind', $sbPaid);
+        poker_house_log($state, $state['dealer_seat'] === poker_house_player_seat() ? poker_house_bot_seat() : poker_house_player_seat(), $bbKey === 'player' ? $row['username'] : 'The Collector', 'big blind', $bbPaid);
         $state['hand_started'] = date('M j, Y H:i:s');
         $state['hand_small_blind'] = $smallBlind;
         $state['hand_big_blind'] = $bigBlind;
@@ -3585,7 +3585,7 @@ function poker_house_finish_session_hand(&$state, $winner, $message)
         'ended' => date('M j, Y H:i:s'),
         'players' => array(
             array('seat_no'=>poker_house_player_seat(),'username'=>'You','starting_stack_text'=>poker_format_bytes(isset($state['player_starting_stack']) ? (int)$state['player_starting_stack'] : 0),'cards'=>array($state['player']['hole1'],$state['player']['hole2'])),
-            array('seat_no'=>poker_house_bot_seat(),'username'=>'House Bot','starting_stack_text'=>poker_format_bytes(isset($state['bot_starting_stack']) ? (int)$state['bot_starting_stack'] : 0),'cards'=>($state['player']['hand_state'] !== 'folded' && $state['bot']['hand_state'] !== 'folded') ? array($state['bot']['hole1'],$state['bot']['hole2']) : array())
+            array('seat_no'=>poker_house_bot_seat(),'username'=>'The Collector','starting_stack_text'=>poker_format_bytes(isset($state['bot_starting_stack']) ? (int)$state['bot_starting_stack'] : 0),'cards'=>($state['player']['hand_state'] !== 'folded' && $state['bot']['hand_state'] !== 'folded') ? array($state['bot']['hole1'],$state['bot']['hole2']) : array())
         ),
         'actions' => $state['actions']
     );
@@ -3614,7 +3614,7 @@ function poker_house_showdown_session(&$state)
     if ($cmp > 0) {
         poker_house_finish_session_hand($state, 'player', 'You win with ' . poker_hand_name($pScore) . '.');
     } elseif ($cmp < 0) {
-        poker_house_finish_session_hand($state, 'bot', 'House Bot wins with ' . poker_hand_name($bScore) . '.');
+        poker_house_finish_session_hand($state, 'bot', 'The Collector wins with ' . poker_hand_name($bScore) . '.');
     } else {
         poker_house_finish_session_hand($state, 'split', 'Split pot — both hands tie with ' . poker_hand_name($pScore) . '.');
     }
@@ -3623,11 +3623,11 @@ function poker_house_showdown_session(&$state)
 function poker_house_advance_session(&$state, $table)
 {
     if ($state['player']['hand_state'] === 'folded') {
-        poker_house_finish_session_hand($state, 'bot', 'House Bot wins — you folded.');
+        poker_house_finish_session_hand($state, 'bot', 'The Collector wins — you folded.');
         return;
     }
     if ($state['bot']['hand_state'] === 'folded') {
-        poker_house_finish_session_hand($state, 'player', 'You win — House Bot folded.');
+        poker_house_finish_session_hand($state, 'player', 'You win — The Collector folded.');
         return;
     }
     if (!poker_house_round_done($state)) return;
@@ -3678,7 +3678,7 @@ function poker_house_session_action($db, $templateId, $userId, $action, $raiseTo
         $other = $who === 'player' ? 'bot' : 'player';
         $seat =& $state[$who];
         $call = max(0, (int)$state['current_bet'] - (int)$seat['round_bet']);
-        $name = $automatic ? 'House Bot' : (string)$row['username'];
+        $name = $automatic ? 'The Collector' : (string)$row['username'];
         $action = strtolower((string)$action);
 
         if ($action === 'fold') {
@@ -3993,7 +3993,7 @@ function poker_house_session_public_state($db, $templateId, $userId, $user)
         if ($state['status']==='playing' && $state['bot']['hole1']) $botCards = array('BACK','BACK');
         if ($showdown && $state['bot']['hole1']) $botCards = array($state['bot']['hole1'],$state['bot']['hole2']);
         $seats[poker_house_bot_seat()] = array(
-            'seat'=>poker_house_bot_seat(),'user_id'=>0,'username'=>'House Bot','avatar'=>'','stack'=>(int)$state['bot']['stack'],'stack_text'=>poker_format_bytes($state['bot']['stack']),
+            'seat'=>poker_house_bot_seat(),'user_id'=>0,'username'=>'The Collector','avatar'=>'images/poker/the-collector.webp','stack'=>(int)$state['bot']['stack'],'stack_text'=>poker_format_bytes($state['bot']['stack']),
             'round_bet'=>(int)$state['bot']['round_bet'],'round_bet_text'=>poker_format_bytes($state['bot']['round_bet']),
             'state'=>(string)$state['bot']['hand_state'],'sitting_out'=>false,'connected'=>true,'reconnecting'=>false,'reconnect_seconds_left'=>0,
             'cards'=>$botCards,'is_turn'=>$state['status']==='playing' && (int)$state['current_turn']===poker_house_bot_seat()

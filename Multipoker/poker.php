@@ -1331,6 +1331,57 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         box-shadow:0 2px 7px rgba(0,0,0,.75);
     }
     #modern-poker .avatar-fallback { line-height:40px; }
+
+    /* The Collector's emblem is his seat box -- no normal player HUD behind it. */
+    #modern-poker .seat.collector-seat {
+        width: 122px;
+        height: 122px;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        overflow: visible;
+    }
+    #modern-poker .seat.collector-seat.turn {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        transform: translateY(-2px);
+    }
+    #modern-poker .seat.collector-seat .avatar {
+        width: 122px;
+        height: 122px;
+        margin: 0;
+        object-fit: contain;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        filter: drop-shadow(0 7px 9px rgba(0,0,0,.78));
+    }
+    #modern-poker .seat.collector-seat .username {
+        display: none;
+    }
+    #modern-poker .seat.collector-seat .stack {
+        position: absolute;
+        left: 50%;
+        bottom: -15px;
+        transform: translateX(-50%);
+        min-width: 74px;
+        padding: 2px 7px;
+        border: 1px solid rgba(185,52,42,.72);
+        border-radius: 10px;
+        background: rgba(7,7,7,.9);
+        color: #f0d1a5;
+        text-align: center;
+        white-space: nowrap;
+        box-shadow: 0 3px 8px rgba(0,0,0,.7);
+    }
+    #modern-poker .seat.collector-seat .seat-state {
+        bottom: -34px;
+    }
+
     #modern-poker .username { font-size:11px;line-height:14px;color:#f4f4f4; }
     #modern-poker .stack { color:#8fe879;font-size:11px;font-weight:700;line-height:14px;text-shadow:0 1px 2px #000; }
     #modern-poker .seat-state {
@@ -2508,11 +2559,6 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 el.classList.add('empty');
 
                 if (lastState && lastState.table && lastState.table.game_type === 'house') {
-                    if (seatNo === 3) {
-                        el.textContent = 'THE COLLECTOR';
-                        el.style.cursor = 'default';
-                        return el;
-                    }
                     if (seatNo !== 8) {
                         el.style.display = 'none';
                         return el;
@@ -2540,6 +2586,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             if (data.is_turn) el.classList.add('turn');
             if (data.state === 'folded') el.classList.add('folded');
             if (data.sitting_out) el.classList.add('sitting-out');
+            if (lastState && lastState.table && lastState.table.game_type === 'house' && parseInt(data.user_id || 0, 10) === 0) {
+                el.classList.add('collector-seat');
+            }
 
             if (data.avatar) {
                 var img = document.createElement('img');
