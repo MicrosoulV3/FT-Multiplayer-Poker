@@ -3313,7 +3313,7 @@ function poker_house_default_state($table, $playerStack)
         'deck' => array(),
         'community' => array(),
         'hand_no' => 0,
-        'message' => 'Ready for a heads-up hand against the House.',
+        'message' => 'And?...you waiting for something special?',
         'session_buyin' => (int)$playerStack,
         'player' => array(
             'stack' => (int)$playerStack,
