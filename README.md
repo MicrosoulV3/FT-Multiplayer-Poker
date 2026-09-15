@@ -1,12 +1,12 @@
 # ♠ FastTracker Poker
 
-A full browser-based Texas Hold'em poker system built for **TorrentTrader / TTv3**.
+A full browser-based Texas Hold'em poker system built for **TTv3 / TTv3.x**.
 
 FastTracker Poker adds multiplayer poker, tournament play, and private single-player games against the house. It integrates with the existing user system and uses tracker **upload credit as poker chips**.
 
 ![FastTracker Multiplayer Poker](screenshots/poker-table.webp)
 
-## 🎰 Poker for TorrentTrader
+## 🎰 Poker for TTv3
 
 
 Players use their upload credit to buy into games.
@@ -96,7 +96,7 @@ The lobby automatically refreshes table information while the player remains on 
 
 ## 💰 Upload Credit as Poker Chips
 
-FastTracker Poker integrates directly with the TorrentTrader upload-credit economy.
+FastTracker Poker integrates directly with the TorrentTrader upload-credit.
 
 A member's existing upload credit becomes their available poker bankroll.
 
@@ -212,7 +212,7 @@ When maintenance is enabled, existing tables can gracefully drain so players hav
 
 ## 🖥 Requirements
 
-FastTracker Poker is designed for integration with a **TorrentTrader / TTv3** installation.
+FastTracker Poker is designed for integration with a **TTv3 / TTv3.x** installation.
 
 Typical requirements include:
 
@@ -282,4 +282,4 @@ Poker chips represent tracker upload credit only.
 
 **Multiplayer. Tournaments. The Collector.**
 
-Built for **TorrentTrader / TTv3**.
+Built for **TTv3 / TTv3.x**.
