@@ -142,6 +142,10 @@ function poker_admin_validate_table_input()
         throw new RuntimeException('Starting big blind must be greater than the starting small blind.');
     }
 
+    if ($minBuyin < $startingBigBlind) {
+        throw new RuntimeException('Minimum buy-in cannot be lower than the starting big blind.');
+    }
+
     if ($blindHandsPerLevel < 1 || $blindHandsPerLevel > 100) {
         throw new RuntimeException('Blind increase interval must be between 1 and 100 hands.');
     }
@@ -1165,7 +1169,7 @@ if (function_exists('begin_frame')) {
                 <div>
                     <label for="new_min">Min Buy-In</label>
                     <div class="buyin-editor">
-                        <input id="new_min" type="number" name="min_buyin_amount" min="0.01" step="0.01" value="1" autocomplete="off" required>
+                        <input id="new_min" type="number" name="min_buyin_amount" min="1" step="1" value="1" autocomplete="off" required>
                         <select name="min_buyin_unit" aria-label="Minimum buy-in unit">
                             <option value="MB">MB</option>
                             <option value="GB" selected>GB</option>
@@ -1175,7 +1179,7 @@ if (function_exists('begin_frame')) {
                 <div>
                     <label for="new_max">Max Buy-In</label>
                     <div class="buyin-editor">
-                        <input id="new_max" type="number" name="max_buyin_amount" min="0.01" step="0.01" value="200" autocomplete="off" required>
+                        <input id="new_max" type="number" name="max_buyin_amount" min="1" step="1" value="200" autocomplete="off" required>
                         <select name="max_buyin_unit" aria-label="Maximum buy-in unit">
                             <option value="MB">MB</option>
                             <option value="GB" selected>GB</option>
@@ -1218,8 +1222,8 @@ if (function_exists('begin_frame')) {
             <input type="hidden" name="max_seats" value="10">
             <div class="create-grid">
                 <div><label>House Table Name</label><input class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Play the House" autocomplete="off" required></div>
-                <div><label>Min Buy-In</label><div class="buyin-editor"><input type="number" name="min_buyin_amount" min="0.01" step="0.01" value="5" autocomplete="off" required><select name="min_buyin_unit"><option value="MB">MB</option><option value="GB" selected>GB</option></select></div></div>
-                <div><label>Max Buy-In</label><div class="buyin-editor"><input type="number" name="max_buyin_amount" min="0.01" step="0.01" value="20" autocomplete="off" required><select name="max_buyin_unit"><option value="MB">MB</option><option value="GB" selected>GB</option></select></div></div>
+                <div><label>Min Buy-In</label><div class="buyin-editor"><input type="number" name="min_buyin_amount" min="1" step="1" value="5" autocomplete="off" required><select name="min_buyin_unit"><option value="MB">MB</option><option value="GB" selected>GB</option></select></div></div>
+                <div><label>Max Buy-In</label><div class="buyin-editor"><input type="number" name="max_buyin_amount" min="1" step="1" value="20" autocomplete="off" required><select name="max_buyin_unit"><option value="MB">MB</option><option value="GB" selected>GB</option></select></div></div>
                 <div><label>Start SB (MB)</label><input type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" name="starting_small_blind_mb" value="100" autocomplete="off" required></div>
                 <div><label>Start BB (MB)</label><input type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" name="starting_big_blind_mb" value="200" autocomplete="off" required></div>
                 <div><label>Blinds</label><input type="hidden" name="blind_hands_per_level" value="1"><div class="create-info">Fixed — No Increases</div></div>
@@ -1237,7 +1241,7 @@ if (function_exists('begin_frame')) {
             <input type="hidden" name="action" value="create_tournament">
             <div class="create-grid">
                 <div><label>Tournament Name</label><input class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Friday Night Tournament" autocomplete="off" required></div>
-                <div><label>Entry Fee</label><div class="buyin-editor"><input type="number" name="entry_amount" min="0.01" step="0.01" value="1" autocomplete="off" required><select name="entry_unit"><option>MB</option><option selected>GB</option></select></div></div>
+                <div><label>Entry Fee</label><div class="buyin-editor"><input type="number" name="entry_amount" min="1" step="1" value="1" autocomplete="off" required><select name="entry_unit"><option>MB</option><option selected>GB</option></select></div></div>
                 <div><label>Starting Chips</label><input type="number" name="starting_chips" min="100" step="100" value="10000" autocomplete="off" required></div>
                 <div><label>Start SB (chips)</label><input type="number" name="tournament_sb" min="1" step="1" value="50" autocomplete="off" required></div>
                 <div><label>Start BB (chips)</label><input type="number" name="tournament_bb" min="2" step="1" value="100" autocomplete="off" required></div>
@@ -1320,7 +1324,7 @@ if (function_exists('begin_frame')) {
                         <div>
                             <label>Min Buy-In</label>
                             <div class="buyin-editor">
-                                <input class="number-input" type="number" name="min_buyin_amount" min="0.01" step="0.01" value="<?php echo htmlspecialchars((string) $minBuyinDisplay['amount'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                <input class="number-input" type="number" name="min_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars((string) $minBuyinDisplay['amount'], ENT_QUOTES, 'UTF-8'); ?>" required>
                                 <select name="min_buyin_unit" aria-label="Minimum buy-in unit">
                                     <option value="MB"<?php echo $minBuyinDisplay['unit'] === 'MB' ? ' selected' : ''; ?>>MB</option>
                                     <option value="GB"<?php echo $minBuyinDisplay['unit'] === 'GB' ? ' selected' : ''; ?>>GB</option>
@@ -1331,7 +1335,7 @@ if (function_exists('begin_frame')) {
                         <div>
                             <label>Max Buy-In</label>
                             <div class="buyin-editor">
-                                <input class="number-input" type="number" name="max_buyin_amount" min="0.01" step="0.01" value="<?php echo htmlspecialchars((string) $maxBuyinDisplay['amount'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                <input class="number-input" type="number" name="max_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars((string) $maxBuyinDisplay['amount'], ENT_QUOTES, 'UTF-8'); ?>" required>
                                 <select name="max_buyin_unit" aria-label="Maximum buy-in unit">
                                     <option value="MB"<?php echo $maxBuyinDisplay['unit'] === 'MB' ? ' selected' : ''; ?>>MB</option>
                                     <option value="GB"<?php echo $maxBuyinDisplay['unit'] === 'GB' ? ' selected' : ''; ?>>GB</option>
