@@ -179,6 +179,29 @@ try {
     } elseif ($action === 'chat') {
         $message = isset($_POST['message']) ? (string) $_POST['message'] : '';
         poker_chat_send($db, $tableId, $userId, $message);
+    } elseif ($action === 'delete_chat_message') {
+        if ((int) $CURUSER['class'] < 6) {
+            throw new RuntimeException('You do not have permission to delete poker chat messages.');
+        }
+
+        $messageId = isset($_POST['message_id']) ? (int) $_POST['message_id'] : 0;
+        if ($messageId <= 0) {
+            throw new RuntimeException('Invalid poker chat message.');
+        }
+
+        /*
+         * Scope the deletion to this table and protect Dealer/system messages,
+         * which use user_id 0.
+         */
+        $stmt = $db->prepare('DELETE FROM poker_chat WHERE id=? AND table_id=? AND user_id>0 LIMIT 1');
+        $stmt->bind_param('ii', $messageId, $tableId);
+        $stmt->execute();
+        $deleted = $stmt->affected_rows;
+        $stmt->close();
+
+        if ($deleted !== 1) {
+            throw new RuntimeException('That chat message is no longer available or cannot be deleted.');
+        }
     } elseif ($action === 'move') {
         $move = isset($_POST['move']) ? (string) $_POST['move'] : '';
         $moveTable = poker_get_table($db,$tableId);

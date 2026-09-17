@@ -921,6 +921,18 @@ if (function_exists('begin_frame')) {
         border-color: #3d3d3d;
     }
 
+    #poker-admin .manage-table-card.table-type-multiplayer {
+        box-shadow: inset 3px 0 0 #3b82c4;
+    }
+
+    #poker-admin .manage-table-card.table-type-house {
+        box-shadow: inset 3px 0 0 #9b59b6;
+    }
+
+    #poker-admin .manage-table-card.table-type-tournament {
+        box-shadow: inset 3px 0 0 #d89a34;
+    }
+
     #poker-admin .table-card-head {
         display: flex;
         align-items: center;
@@ -943,6 +955,39 @@ if (function_exists('begin_frame')) {
         color: #fff;
         font-size: 14px;
         font-weight: 700;
+    }
+
+    #poker-admin .table-type-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 4px 9px;
+        border: 1px solid;
+        border-radius: 12px;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .45px;
+        line-height: 1;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    #poker-admin .table-type-badge.multiplayer {
+        border-color: #356f9e;
+        background: #162a3b;
+        color: #88c9f7;
+    }
+
+    #poker-admin .table-type-badge.house {
+        border-color: #70447f;
+        background: #29182f;
+        color: #d5a1e5;
+    }
+
+    #poker-admin .table-type-badge.tournament {
+        border-color: #86601f;
+        background: #30230f;
+        color: #f1c268;
     }
 
     #poker-admin .manage-settings-layout {
@@ -1259,7 +1304,7 @@ if (function_exists('begin_frame')) {
     </div>
 
     <div id="create-table" class="admin-card<?php echo $formTarget === 'create-table' && $formError !== '' ? ' form-error-target' : ''; ?>">
-        <h3 class="card-title">Create Poker Table</h3>
+        <h3 class="card-title">Create Multiplayer Table</h3>
         <?php if ($formTarget === 'create-table' && $formError !== '') { ?><div class="notice error form-notice"><?php echo htmlspecialchars($formError, ENT_QUOTES, 'UTF-8'); ?></div><?php } ?>
         <form method="post" action="poker-admin.php" autocomplete="off">
             <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
@@ -1418,14 +1463,14 @@ if (function_exists('begin_frame')) {
             $isHouse = isset($table['game_type']) && $table['game_type'] === 'house';
         ?>
             <?php $tableTarget = 'table-' . (int) $table['id']; ?>
-            <div id="<?php echo $tableTarget; ?>" class="manage-table-card<?php echo $formTarget === $tableTarget && $formError !== '' ? ' form-error-target' : ''; ?>">
+            <div id="<?php echo $tableTarget; ?>" class="manage-table-card table-type-<?php echo $isTournament ? 'tournament' : ($isHouse ? 'house' : 'multiplayer'); ?><?php echo $formTarget === $tableTarget && $formError !== '' ? ' form-error-target' : ''; ?>">
                 <?php if ($formTarget === $tableTarget && $formError !== '') { ?><div class="notice error form-notice"><?php echo htmlspecialchars($formError, ENT_QUOTES, 'UTF-8'); ?></div><?php } ?>
                 <div class="table-card-head">
                     <div>
                         <span class="table-card-id">Table #<?php echo (int) $table['id']; ?></span>
                         <span class="table-card-name"><?php echo htmlspecialchars($table['name'], ENT_QUOTES, 'UTF-8'); ?></span>
                     </div>
-                    <?php if ($isTournament) { ?><span class="table-card-id">TOURNAMENT · <?php echo htmlspecialchars(strtoupper($table['tournament_status']), ENT_QUOTES, 'UTF-8'); ?></span><?php } elseif ($isHouse) { ?><span class="table-card-id">HOUSE TABLE</span><?php } ?>
+                    <?php if ($isTournament) { ?><span class="table-type-badge tournament">Tournament · <?php echo htmlspecialchars($table['tournament_status'], ENT_QUOTES, 'UTF-8'); ?></span><?php } elseif ($isHouse) { ?><span class="table-type-badge house">House Table</span><?php } else { ?><span class="table-type-badge multiplayer">Multiplayer Table</span><?php } ?>
                     <span class="status <?php echo htmlspecialchars($status, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($statusText, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
 

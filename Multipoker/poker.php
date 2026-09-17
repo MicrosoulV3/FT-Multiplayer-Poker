@@ -869,6 +869,27 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         margin-right: 5px;
     }
 
+    #modern-poker .chat-delete-button {
+        float: right;
+        min-height: 18px;
+        margin: -1px 0 0 7px;
+        padding: 1px 5px;
+        border: 1px solid #633838;
+        border-radius: 3px;
+        background: #321919;
+        color: #e89a9a;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 14px;
+        cursor: pointer;
+    }
+
+    #modern-poker .chat-delete-button:hover {
+        border-color: #9a4b4b;
+        background: #4a2020;
+        color: #ffd0d0;
+    }
+
     #modern-poker .chat-empty {
         color: #666;
         text-align: center;
@@ -1507,7 +1528,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
 </style>
 
-<div id="modern-poker" data-table-id="<?php echo (int) $tableId; ?>" data-csrf="<?php echo $csrf; ?>" data-user-id="<?php echo (int) $CURUSER['id']; ?>">
+<div id="modern-poker" data-table-id="<?php echo (int) $tableId; ?>" data-csrf="<?php echo $csrf; ?>" data-user-id="<?php echo (int) $CURUSER['id']; ?>" data-can-moderate-chat="<?php echo ((int) $CURUSER['class'] >= 6 ? '1' : '0'); ?>">
     <div class="poker-layout">
         <div class="poker-play-column">
             <div class="table-wrap" id="pokerTable">
@@ -2521,6 +2542,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
         function renderChat(messages) {
             var log = document.getElementById('chatLog');
+            var canModerateChat = document.getElementById('modern-poker').dataset.canModerateChat === '1';
             var shouldStickToBottom = (log.scrollHeight - log.scrollTop - log.clientHeight) < 30;
             var newestId = messages.length ? messages[messages.length - 1].id : 0;
             var hasNewMessage = newestId > lastChatId;
@@ -2551,6 +2573,24 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     var body = document.createElement('span');
                     body.className = 'chat-text';
                     body.textContent = message.message;
+
+                    var isSystemMessage = parseInt(message.user_id || 0, 10) === 0;
+                    if (canModerateChat && !isSystemMessage) {
+                        var deleteButton = document.createElement('button');
+                        deleteButton.type = 'button';
+                        deleteButton.className = 'chat-delete-button';
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.setAttribute('aria-label', 'Delete chat message from ' + message.username);
+                        deleteButton.addEventListener('click', function() {
+                            if (!confirm('Delete this chat message from ' + message.username + '?')) return;
+
+                            deleteButton.disabled = true;
+                            post('delete_chat_message', { message_id: message.id }).catch(function() {
+                                deleteButton.disabled = false;
+                            });
+                        });
+                        line.appendChild(deleteButton);
+                    }
 
                     line.appendChild(time);
                     line.appendChild(name);
