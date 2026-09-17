@@ -2012,7 +2012,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         var handPositions = {
             1: [105, 158],
             2: [191, 116],
-            3: [335, 104],
+            3: [335, 124],
             4: [477, 116],
             5: [572, 158],
 
