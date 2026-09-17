@@ -24,10 +24,30 @@ if (empty($CURUSER['id']) || (int) $CURUSER['class'] < 7) {
 
 $db = poker_db();
 
-function poker_admin_redirect($message, $type = 'success')
+function poker_admin_redirect($message, $type = 'success', $target = '')
 {
-    header('Location: poker-admin.php?type=' . rawurlencode($type) . '&message=' . rawurlencode($message));
+    $location = 'poker-admin.php?type=' . rawurlencode($type) . '&message=' . rawurlencode($message);
+    if ($target !== '') {
+        $location .= '#' . rawurlencode($target);
+    }
+    header('Location: ' . $location);
     exit;
+}
+
+function poker_admin_post_value($target, $name, $default = '')
+{
+    global $formTarget;
+
+    if ($formTarget === $target && isset($_POST[$name]) && !is_array($_POST[$name])) {
+        return (string) $_POST[$name];
+    }
+
+    return (string) $default;
+}
+
+function poker_admin_selected($target, $name, $value, $default = '')
+{
+    return poker_admin_post_value($target, $name, $default) === (string) $value ? ' selected' : '';
 }
 
 function poker_admin_valid_csrf()
@@ -47,7 +67,7 @@ function poker_admin_parse_mb($value)
 
     $mb = (float) $value;
 
-    if ($mb <= 0) {
+    if ($mb <= 0 || floor($mb) != $mb) {
         return 0;
     }
 
@@ -62,7 +82,7 @@ function poker_admin_parse_gb($value)
 
     $gb = (float) $value;
 
-    if ($gb <= 0) {
+    if ($gb <= 0 || floor($gb) != $gb) {
         return 0;
     }
 
@@ -88,7 +108,7 @@ function poker_admin_buyin_display($bytes)
 {
     $bytes = (int) $bytes;
 
-    if ($bytes < GB) {
+    if ($bytes < GB || ($bytes % GB) !== 0) {
         return array(
             'amount' => round($bytes / MB, 2),
             'unit' => 'MB'
@@ -117,8 +137,17 @@ function poker_admin_validate_table_input()
         // Backward compatibility with the previous GB-only admin form.
         $maxBuyin = poker_admin_parse_gb(isset($_POST['max_buyin_gb']) ? $_POST['max_buyin_gb'] : '');
     }
-    $startingSmallBlind = poker_admin_parse_mb(isset($_POST['starting_small_blind_mb']) ? $_POST['starting_small_blind_mb'] : '');
-    $startingBigBlind = poker_admin_parse_mb(isset($_POST['starting_big_blind_mb']) ? $_POST['starting_big_blind_mb'] : '');
+    if (isset($_POST['starting_small_blind_amount'], $_POST['starting_small_blind_unit'])) {
+        $startingSmallBlind = poker_admin_parse_buyin($_POST['starting_small_blind_amount'], $_POST['starting_small_blind_unit']);
+    } else {
+        $startingSmallBlind = poker_admin_parse_mb(isset($_POST['starting_small_blind_mb']) ? $_POST['starting_small_blind_mb'] : '');
+    }
+
+    if (isset($_POST['starting_big_blind_amount'], $_POST['starting_big_blind_unit'])) {
+        $startingBigBlind = poker_admin_parse_buyin($_POST['starting_big_blind_amount'], $_POST['starting_big_blind_unit']);
+    } else {
+        $startingBigBlind = poker_admin_parse_mb(isset($_POST['starting_big_blind_mb']) ? $_POST['starting_big_blind_mb'] : '');
+    }
     $blindHandsPerLevel = isset($_POST['blind_hands_per_level']) ? (int) $_POST['blind_hands_per_level'] : 5;
     $maxSeats = isset($_POST['max_seats']) ? (int) $_POST['max_seats'] : 10;
 
@@ -157,14 +186,28 @@ function poker_admin_validate_table_input()
     return array($name, $minBuyin, $maxBuyin, $startingSmallBlind, $startingBigBlind, $blindHandsPerLevel, $maxSeats);
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!poker_admin_valid_csrf()) {
-        poker_admin_redirect('Invalid request token.', 'error');
-    }
+$formError = '';
+$formTarget = '';
+$focusField = '';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = isset($_POST['action']) ? (string) $_POST['action'] : '';
+    $tableIdForTarget = isset($_POST['table_id']) ? (int) $_POST['table_id'] : 0;
+    $formTargets = array(
+        'create_table' => 'create-table',
+        'create_house' => 'create-house',
+        'create_tournament' => 'create-tournament',
+        'set_maintenance' => 'maintenance'
+    );
+    $formTarget = isset($formTargets[$action])
+        ? $formTargets[$action]
+        : ($tableIdForTarget > 0 ? 'table-' . $tableIdForTarget : 'poker-admin');
+    $focusField = isset($_POST['_focus_field']) ? trim((string) $_POST['_focus_field']) : '';
 
     try {
+        if (!poker_admin_valid_csrf()) {
+            throw new RuntimeException('Invalid request token. Please refresh the page and try again.');
+        }
         if ($action === 'create_table') {
             list(
                 $name,
@@ -587,7 +630,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         throw new RuntimeException('Unknown admin action.');
     } catch (Throwable $e) {
-        poker_admin_redirect($e->getMessage(), 'error');
+        $formError = $e->getMessage();
     }
 }
 
@@ -749,6 +792,15 @@ if (function_exists('begin_frame')) {
         color: #f0a5a5;
     }
 
+    #poker-admin .form-notice {
+        margin: 0 0 12px;
+    }
+
+    #poker-admin .form-error-target {
+        border-color: #8a4646;
+        box-shadow: 0 0 0 1px rgba(138, 70, 70, .28);
+    }
+
     #poker-admin .admin-card {
         margin-bottom: 14px;
         padding: 15px;
@@ -893,19 +945,64 @@ if (function_exists('begin_frame')) {
         font-weight: 700;
     }
 
-    #poker-admin .manage-edit-grid {
+    #poker-admin .manage-settings-layout {
         display: grid;
-        grid-template-columns: minmax(180px, 1.7fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(92px, .8fr) minmax(92px, .8fr) minmax(82px, .7fr) minmax(70px, .6fr);
+        grid-template-columns: minmax(250px, 1.25fr) minmax(310px, 1fr) minmax(310px, 1fr);
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    #poker-admin .manage-settings-layout.house-settings {
+        grid-template-columns: minmax(250px, 1.15fr) minmax(310px, 1fr) minmax(310px, 1fr);
+    }
+
+    #poker-admin .setting-group {
+        padding: 11px;
+        border: 1px solid #2d2d2d;
+        border-radius: 5px;
+        background: #151515;
+    }
+
+    #poker-admin .setting-group-title {
+        margin: 0 0 9px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #292929;
+        color: #d58b2a;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+    }
+
+    #poker-admin .setting-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 9px;
         align-items: end;
     }
 
-    #poker-admin .manage-edit-grid label {
+    #poker-admin .setting-fields.single-field {
+        grid-template-columns: 1fr;
+    }
+
+    #poker-admin .table-setup-fields {
+        grid-template-columns: minmax(150px, 1.5fr) minmax(80px, .7fr) minmax(70px, .6fr);
+    }
+
+    #poker-admin .house-settings .table-setup-fields {
+        grid-template-columns: 1fr;
+    }
+
+    #poker-admin .setting-group label {
         white-space: nowrap;
     }
 
-    #poker-admin .manage-edit-grid.house-edit-grid {
-        grid-template-columns: minmax(240px, 1.8fr) minmax(145px, 1fr) minmax(145px, 1fr) minmax(110px, .8fr) minmax(110px, .8fr);
+    #poker-admin .tournament-settings {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    #poker-admin .tournament-settings .setting-group {
+        min-width: 0;
     }
 
     #poker-admin .house-info-subtext {
@@ -1073,6 +1170,7 @@ if (function_exists('begin_frame')) {
 
     #poker-admin .maintenance-card {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
         gap: 20px;
@@ -1105,6 +1203,10 @@ if (function_exists('begin_frame')) {
         line-height: 1.5;
     }
 
+    #poker-admin .maintenance-card .form-notice {
+        width: 100%;
+    }
+
     #poker-admin .maintenance-button {
         white-space: nowrap;
     }
@@ -1119,13 +1221,14 @@ if (function_exists('begin_frame')) {
         <a class="back-link" href="poker-lobby.php">Back to Poker Lobby</a>
     </div>
 
-    <?php if ($message !== '') { ?>
+    <?php if ($message !== '' && $messageType !== 'error') { ?>
         <div class="notice <?php echo $messageType === 'error' ? 'error' : ''; ?>">
             <?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
         </div>
     <?php } ?>
 
-    <div class="admin-card maintenance-card">
+    <div id="maintenance" class="admin-card maintenance-card<?php echo $formTarget === 'maintenance' && $formError !== '' ? ' form-error-target' : ''; ?>">
+        <?php if ($formTarget === 'maintenance' && $formError !== '') { ?><div class="notice error form-notice"><?php echo htmlspecialchars($formError, ENT_QUOTES, 'UTF-8'); ?></div><?php } ?>
         <div>
             <h3 class="card-title">
                 Poker Maintenance: Tables are
@@ -1155,8 +1258,9 @@ if (function_exists('begin_frame')) {
         </form>
     </div>
 
-    <div class="admin-card">
+    <div id="create-table" class="admin-card<?php echo $formTarget === 'create-table' && $formError !== '' ? ' form-error-target' : ''; ?>">
         <h3 class="card-title">Create Poker Table</h3>
+        <?php if ($formTarget === 'create-table' && $formError !== '') { ?><div class="notice error form-notice"><?php echo htmlspecialchars($formError, ENT_QUOTES, 'UTF-8'); ?></div><?php } ?>
         <form method="post" action="poker-admin.php" autocomplete="off">
             <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
             <input type="hidden" name="action" value="create_table">
@@ -1164,45 +1268,57 @@ if (function_exists('begin_frame')) {
             <div class="create-grid">
                 <div>
                     <label for="new_name">Table Name</label>
-                    <input id="new_name" class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Friday Night Table" autocomplete="off" required>
+                    <input id="new_name" class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Friday Night Table" value="<?php echo htmlspecialchars(poker_admin_post_value('create-table', 'name'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required>
                 </div>
                 <div>
                     <label for="new_min">Min Buy-In</label>
                     <div class="buyin-editor">
-                        <input id="new_min" type="number" name="min_buyin_amount" min="1" step="1" value="1" autocomplete="off" required>
+                        <input id="new_min" type="number" name="min_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-table', 'min_buyin_amount', '1'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required>
                         <select name="min_buyin_unit" aria-label="Minimum buy-in unit">
-                            <option value="MB">MB</option>
-                            <option value="GB" selected>GB</option>
+                            <option value="MB"<?php echo poker_admin_selected('create-table', 'min_buyin_unit', 'MB', 'GB'); ?>>MB</option>
+                            <option value="GB"<?php echo poker_admin_selected('create-table', 'min_buyin_unit', 'GB', 'GB'); ?>>GB</option>
                         </select>
                     </div>
                 </div>
                 <div>
                     <label for="new_max">Max Buy-In</label>
                     <div class="buyin-editor">
-                        <input id="new_max" type="number" name="max_buyin_amount" min="1" step="1" value="200" autocomplete="off" required>
+                        <input id="new_max" type="number" name="max_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-table', 'max_buyin_amount', '200'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required>
                         <select name="max_buyin_unit" aria-label="Maximum buy-in unit">
-                            <option value="MB">MB</option>
-                            <option value="GB" selected>GB</option>
+                            <option value="MB"<?php echo poker_admin_selected('create-table', 'max_buyin_unit', 'MB', 'GB'); ?>>MB</option>
+                            <option value="GB"<?php echo poker_admin_selected('create-table', 'max_buyin_unit', 'GB', 'GB'); ?>>GB</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label for="new_sb">Start SB (MB)</label>
-                    <input id="new_sb" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" name="starting_small_blind_mb" value="100" autocomplete="off" required>
+                    <label for="new_sb">Start SB</label>
+                    <div class="buyin-editor">
+                        <input id="new_sb" type="number" name="starting_small_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-table', 'starting_small_blind_amount', '100'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required>
+                        <select name="starting_small_blind_unit" aria-label="Starting small blind unit">
+                            <option value="MB"<?php echo poker_admin_selected('create-table', 'starting_small_blind_unit', 'MB', 'MB'); ?>>MB</option>
+                            <option value="GB"<?php echo poker_admin_selected('create-table', 'starting_small_blind_unit', 'GB', 'MB'); ?>>GB</option>
+                        </select>
+                    </div>
                 </div>
                 <div>
-                    <label for="new_bb">Start BB (MB)</label>
-                    <input id="new_bb" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" name="starting_big_blind_mb" value="200" autocomplete="off" required>
+                    <label for="new_bb">Start BB</label>
+                    <div class="buyin-editor">
+                        <input id="new_bb" type="number" name="starting_big_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-table', 'starting_big_blind_amount', '200'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required>
+                        <select name="starting_big_blind_unit" aria-label="Starting big blind unit">
+                            <option value="MB"<?php echo poker_admin_selected('create-table', 'starting_big_blind_unit', 'MB', 'MB'); ?>>MB</option>
+                            <option value="GB"<?php echo poker_admin_selected('create-table', 'starting_big_blind_unit', 'GB', 'MB'); ?>>GB</option>
+                        </select>
+                    </div>
                 </div>
                 <div>
                     <label for="new_interval">Raise Every</label>
-                    <input id="new_interval" type="number" name="blind_hands_per_level" min="1" max="100" step="1" value="5" autocomplete="off" required>
+                    <input id="new_interval" type="number" name="blind_hands_per_level" min="1" max="100" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-table', 'blind_hands_per_level', '5'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required>
                 </div>
                 <div>
                     <label for="new_seats">Seats</label>
                     <select id="new_seats" name="max_seats">
                         <?php for ($i = 2; $i <= 10; $i++) { ?>
-                            <option value="<?php echo $i; ?>"<?php echo $i === 10 ? ' selected' : ''; ?>><?php echo $i; ?></option>
+                            <option value="<?php echo $i; ?>"<?php echo poker_admin_selected('create-table', 'max_seats', $i, '10'); ?>><?php echo $i; ?></option>
                         <?php } ?>
                     </select>
                 </div>
@@ -1214,18 +1330,19 @@ if (function_exists('begin_frame')) {
         <div class="small-note">Starting blinds and the escalation interval are stored per table. The familiar blind curve scales upward from the starting values you choose.</div>
     </div>
 
-    <div class="admin-card">
+    <div id="create-house" class="admin-card<?php echo $formTarget === 'create-house' && $formError !== '' ? ' form-error-target' : ''; ?>">
         <h3 class="card-title">Create House Table</h3>
+        <?php if ($formTarget === 'create-house' && $formError !== '') { ?><div class="notice error form-notice"><?php echo htmlspecialchars($formError, ENT_QUOTES, 'UTF-8'); ?></div><?php } ?>
         <form method="post" action="poker-admin.php" autocomplete="off">
             <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
             <input type="hidden" name="action" value="create_house">
             <input type="hidden" name="max_seats" value="10">
             <div class="create-grid">
-                <div><label>House Table Name</label><input class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Play the House" autocomplete="off" required></div>
-                <div><label>Min Buy-In</label><div class="buyin-editor"><input type="number" name="min_buyin_amount" min="1" step="1" value="5" autocomplete="off" required><select name="min_buyin_unit"><option value="MB">MB</option><option value="GB" selected>GB</option></select></div></div>
-                <div><label>Max Buy-In</label><div class="buyin-editor"><input type="number" name="max_buyin_amount" min="1" step="1" value="20" autocomplete="off" required><select name="max_buyin_unit"><option value="MB">MB</option><option value="GB" selected>GB</option></select></div></div>
-                <div><label>Start SB (MB)</label><input type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" name="starting_small_blind_mb" value="100" autocomplete="off" required></div>
-                <div><label>Start BB (MB)</label><input type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" name="starting_big_blind_mb" value="200" autocomplete="off" required></div>
+                <div><label>House Table Name</label><input class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Play the House" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'name'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
+                <div><label>Min Buy-In</label><div class="buyin-editor"><input type="number" name="min_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'min_buyin_amount', '5'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="min_buyin_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'min_buyin_unit', 'MB', 'GB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'min_buyin_unit', 'GB', 'GB'); ?>>GB</option></select></div></div>
+                <div><label>Max Buy-In</label><div class="buyin-editor"><input type="number" name="max_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'max_buyin_amount', '20'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="max_buyin_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'max_buyin_unit', 'MB', 'GB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'max_buyin_unit', 'GB', 'GB'); ?>>GB</option></select></div></div>
+                <div><label>Start SB</label><div class="buyin-editor"><input type="number" name="starting_small_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'starting_small_blind_amount', '100'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="starting_small_blind_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'starting_small_blind_unit', 'MB', 'MB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'starting_small_blind_unit', 'GB', 'MB'); ?>>GB</option></select></div></div>
+                <div><label>Start BB</label><div class="buyin-editor"><input type="number" name="starting_big_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'starting_big_blind_amount', '200'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="starting_big_blind_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'starting_big_blind_unit', 'MB', 'MB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'starting_big_blind_unit', 'GB', 'MB'); ?>>GB</option></select></div></div>
                 <div><label>Blinds</label><input type="hidden" name="blind_hands_per_level" value="1"><div class="create-info">Fixed — No Increases</div></div>
                 <div><label>Game</label><div class="create-info">1 Player vs The Collector</div></div>
                 <div><button class="save-button" type="submit">Create House Table</button></div>
@@ -1234,19 +1351,20 @@ if (function_exists('begin_frame')) {
         <div class="small-note">Heads-up Hold'em against a server-controlled opponent known as The Collector. House blinds stay fixed, and the bot starts each hand with the same amount the player originally bought in for. The House never reads the player's hidden cards.</div>
     </div>
 
-    <div class="admin-card">
+    <div id="create-tournament" class="admin-card<?php echo $formTarget === 'create-tournament' && $formError !== '' ? ' form-error-target' : ''; ?>">
         <h3 class="card-title">Create Tournament</h3>
+        <?php if ($formTarget === 'create-tournament' && $formError !== '') { ?><div class="notice error form-notice"><?php echo htmlspecialchars($formError, ENT_QUOTES, 'UTF-8'); ?></div><?php } ?>
         <form method="post" action="poker-admin.php" autocomplete="off">
             <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
             <input type="hidden" name="action" value="create_tournament">
             <div class="create-grid">
-                <div><label>Tournament Name</label><input class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Friday Night Tournament" autocomplete="off" required></div>
-                <div><label>Entry Fee</label><div class="buyin-editor"><input type="number" name="entry_amount" min="1" step="1" value="1" autocomplete="off" required><select name="entry_unit"><option>MB</option><option selected>GB</option></select></div></div>
-                <div><label>Starting Chips</label><input type="number" name="starting_chips" min="100" step="100" value="10000" autocomplete="off" required></div>
-                <div><label>Start SB (chips)</label><input type="number" name="tournament_sb" min="1" step="1" value="50" autocomplete="off" required></div>
-                <div><label>Start BB (chips)</label><input type="number" name="tournament_bb" min="2" step="1" value="100" autocomplete="off" required></div>
-                <div><label>Raise Every</label><input type="number" name="blind_hands_per_level" min="1" max="100" value="5" autocomplete="off" required></div>
-                <div><label>Seats</label><select name="max_seats"><?php for($i=2;$i<=10;$i++){ ?><option value="<?php echo $i; ?>"<?php echo $i===10?' selected':''; ?>><?php echo $i; ?></option><?php } ?></select></div>
+                <div><label>Tournament Name</label><input class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Friday Night Tournament" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'name'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
+                <div><label>Entry Fee</label><div class="buyin-editor"><input type="number" name="entry_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'entry_amount', '1'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="entry_unit"><option<?php echo poker_admin_selected('create-tournament', 'entry_unit', 'MB', 'GB'); ?>>MB</option><option<?php echo poker_admin_selected('create-tournament', 'entry_unit', 'GB', 'GB'); ?>>GB</option></select></div></div>
+                <div><label>Starting Chips</label><input type="number" name="starting_chips" min="100" step="100" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'starting_chips', '10000'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
+                <div><label>Start SB (chips)</label><input type="number" name="tournament_sb" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'tournament_sb', '50'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
+                <div><label>Start BB (chips)</label><input type="number" name="tournament_bb" min="2" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'tournament_bb', '100'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
+                <div><label>Raise Every</label><input type="number" name="blind_hands_per_level" min="1" max="100" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'blind_hands_per_level', '5'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
+                <div><label>Seats</label><select name="max_seats"><?php for($i=2;$i<=10;$i++){ ?><option value="<?php echo $i; ?>"<?php echo poker_admin_selected('create-tournament', 'max_seats', $i, '10'); ?>><?php echo $i; ?></option><?php } ?></select></div>
                 <div><button class="save-button" type="submit">Create Tournament</button></div>
             </div>
         </form>
@@ -1294,12 +1412,14 @@ if (function_exists('begin_frame')) {
             $statusText = $status === 'showdown' ? 'Between' : ucfirst($status);
             $minBuyinDisplay = poker_admin_buyin_display($table['min_buyin']);
             $maxBuyinDisplay = poker_admin_buyin_display($table['max_buyin']);
-            $startSmallMb = round(((float) $table['starting_small_blind']) / MB, 2);
-            $startBigMb = round(((float) $table['starting_big_blind']) / MB, 2);
+            $startSmallDisplay = poker_admin_buyin_display($table['starting_small_blind']);
+            $startBigDisplay = poker_admin_buyin_display($table['starting_big_blind']);
             $isTournament = isset($table['game_type']) && $table['game_type'] === 'tournament';
             $isHouse = isset($table['game_type']) && $table['game_type'] === 'house';
         ?>
-            <div class="manage-table-card">
+            <?php $tableTarget = 'table-' . (int) $table['id']; ?>
+            <div id="<?php echo $tableTarget; ?>" class="manage-table-card<?php echo $formTarget === $tableTarget && $formError !== '' ? ' form-error-target' : ''; ?>">
+                <?php if ($formTarget === $tableTarget && $formError !== '') { ?><div class="notice error form-notice"><?php echo htmlspecialchars($formError, ENT_QUOTES, 'UTF-8'); ?></div><?php } ?>
                 <div class="table-card-head">
                     <div>
                         <span class="table-card-id">Table #<?php echo (int) $table['id']; ?></span>
@@ -1315,62 +1435,89 @@ if (function_exists('begin_frame')) {
                     <input type="hidden" name="table_id" value="<?php echo (int) $table['id']; ?>">
 
                     <?php if (!$isTournament) { ?>
-                    <div class="manage-edit-grid<?php echo $isHouse ? ' house-edit-grid' : ''; ?>">
-                        <div>
-                            <label>Table Name</label>
-                            <input class="table-name-input" type="text" name="name" maxlength="64" value="<?php echo htmlspecialchars($table['name'], ENT_QUOTES, 'UTF-8'); ?>" required>
-                        </div>
+                    <div class="manage-settings-layout<?php echo $isHouse ? ' house-settings' : ''; ?>">
+                        <div class="setting-group">
+                            <div class="setting-group-title">Table Setup</div>
+                            <div class="setting-fields table-setup-fields">
+                                <div>
+                                    <label>Table Name</label>
+                                    <input class="table-name-input" type="text" name="name" maxlength="64" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'name', $table['name']), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                </div>
 
-                        <div>
-                            <label>Min Buy-In</label>
-                            <div class="buyin-editor">
-                                <input class="number-input" type="number" name="min_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars((string) $minBuyinDisplay['amount'], ENT_QUOTES, 'UTF-8'); ?>" required>
-                                <select name="min_buyin_unit" aria-label="Minimum buy-in unit">
-                                    <option value="MB"<?php echo $minBuyinDisplay['unit'] === 'MB' ? ' selected' : ''; ?>>MB</option>
-                                    <option value="GB"<?php echo $minBuyinDisplay['unit'] === 'GB' ? ' selected' : ''; ?>>GB</option>
-                                </select>
-                            </div>
-                        </div>
+                                <?php if (!$isHouse) { ?>
+                                <div>
+                                    <label>Raise Every</label>
+                                    <input class="number-input" type="number" name="blind_hands_per_level" min="1" max="100" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'blind_hands_per_level', $table['blind_hands_per_level']), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                </div>
 
-                        <div>
-                            <label>Max Buy-In</label>
-                            <div class="buyin-editor">
-                                <input class="number-input" type="number" name="max_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars((string) $maxBuyinDisplay['amount'], ENT_QUOTES, 'UTF-8'); ?>" required>
-                                <select name="max_buyin_unit" aria-label="Maximum buy-in unit">
-                                    <option value="MB"<?php echo $maxBuyinDisplay['unit'] === 'MB' ? ' selected' : ''; ?>>MB</option>
-                                    <option value="GB"<?php echo $maxBuyinDisplay['unit'] === 'GB' ? ' selected' : ''; ?>>GB</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label>Start SB (MB)</label>
-                            <input class="number-input" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" name="starting_small_blind_mb" value="<?php echo htmlspecialchars((string) $startSmallMb, ENT_QUOTES, 'UTF-8'); ?>" required>
-                        </div>
-
-                        <div>
-                            <label>Start BB (MB)</label>
-                            <input class="number-input" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" name="starting_big_blind_mb" value="<?php echo htmlspecialchars((string) $startBigMb, ENT_QUOTES, 'UTF-8'); ?>" required>
-                        </div>
-
-                        <?php if (!$isHouse) { ?>
-                        <div>
-                            <label>Raise Every</label>
-                            <input class="number-input" type="number" name="blind_hands_per_level" min="1" max="100" step="1" value="<?php echo (int) $table['blind_hands_per_level']; ?>" required>
-                        </div>
-
-                        <div>
-                            <label>Seats</label>
-                            <select class="seat-select" name="max_seats">
-                                <?php for ($i = 2; $i <= 10; $i++) { ?>
-                                    <option value="<?php echo $i; ?>"<?php echo $i === (int) $table['max_seats'] ? ' selected' : ''; ?>><?php echo $i; ?></option>
+                                <div>
+                                    <label>Seats</label>
+                                    <select class="seat-select" name="max_seats">
+                                        <?php for ($i = 2; $i <= 10; $i++) { ?>
+                                            <option value="<?php echo $i; ?>"<?php echo poker_admin_selected($tableTarget, 'max_seats', $i, $table['max_seats']); ?>><?php echo $i; ?></option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                                <?php } else { ?>
+                                    <input type="hidden" name="blind_hands_per_level" value="1">
+                                    <input type="hidden" name="max_seats" value="10">
                                 <?php } ?>
-                            </select>
+                            </div>
                         </div>
-                        <?php } else { ?>
-                            <input type="hidden" name="blind_hands_per_level" value="1">
-                            <input type="hidden" name="max_seats" value="10">
-                        <?php } ?>
+
+                        <div class="setting-group">
+                            <div class="setting-group-title">Buy-In Range</div>
+                            <div class="setting-fields">
+                                <div>
+                                    <label>Minimum</label>
+                                    <div class="buyin-editor">
+                                        <input class="number-input" type="number" name="min_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'min_buyin_amount', $minBuyinDisplay['amount']), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        <select name="min_buyin_unit" aria-label="Minimum buy-in unit">
+                                            <option value="MB"<?php echo poker_admin_selected($tableTarget, 'min_buyin_unit', 'MB', $minBuyinDisplay['unit']); ?>>MB</option>
+                                            <option value="GB"<?php echo poker_admin_selected($tableTarget, 'min_buyin_unit', 'GB', $minBuyinDisplay['unit']); ?>>GB</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label>Maximum</label>
+                                    <div class="buyin-editor">
+                                        <input class="number-input" type="number" name="max_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'max_buyin_amount', $maxBuyinDisplay['amount']), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        <select name="max_buyin_unit" aria-label="Maximum buy-in unit">
+                                            <option value="MB"<?php echo poker_admin_selected($tableTarget, 'max_buyin_unit', 'MB', $maxBuyinDisplay['unit']); ?>>MB</option>
+                                            <option value="GB"<?php echo poker_admin_selected($tableTarget, 'max_buyin_unit', 'GB', $maxBuyinDisplay['unit']); ?>>GB</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <div class="setting-group-title">Starting Blinds</div>
+                            <div class="setting-fields">
+                                <div>
+                                    <label>Small Blind</label>
+                                    <div class="buyin-editor">
+                                        <input class="number-input" type="number" name="starting_small_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'starting_small_blind_amount', $startSmallDisplay['amount']), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        <select name="starting_small_blind_unit" aria-label="Starting small blind unit">
+                                            <option value="MB"<?php echo poker_admin_selected($tableTarget, 'starting_small_blind_unit', 'MB', $startSmallDisplay['unit']); ?>>MB</option>
+                                            <option value="GB"<?php echo poker_admin_selected($tableTarget, 'starting_small_blind_unit', 'GB', $startSmallDisplay['unit']); ?>>GB</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label>Big Blind</label>
+                                    <div class="buyin-editor">
+                                        <input class="number-input" type="number" name="starting_big_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'starting_big_blind_amount', $startBigDisplay['amount']), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        <select name="starting_big_blind_unit" aria-label="Starting big blind unit">
+                                            <option value="MB"<?php echo poker_admin_selected($tableTarget, 'starting_big_blind_unit', 'MB', $startBigDisplay['unit']); ?>>MB</option>
+                                            <option value="GB"<?php echo poker_admin_selected($tableTarget, 'starting_big_blind_unit', 'GB', $startBigDisplay['unit']); ?>>GB</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <?php if ($isHouse) { ?>
                     <div class="house-info-subtext">
@@ -1378,12 +1525,12 @@ if (function_exists('begin_frame')) {
                     </div>
                     <?php } ?>
                     <?php } else { ?>
-                    <div class="manage-edit-grid">
-                        <div><label>Entry Fee</label><strong><?php echo htmlspecialchars(poker_format_bytes($table['tournament_entry_fee']), ENT_QUOTES, 'UTF-8'); ?></strong></div>
-                        <div><label>Starting Stack</label><strong><?php echo number_format((int)$table['tournament_starting_stack']); ?> chips</strong></div>
-                        <div><label>Starting Blinds</label><strong><?php echo number_format((int)$table['starting_small_blind']); ?> / <?php echo number_format((int)$table['starting_big_blind']); ?></strong></div>
-                        <div><label>Prize Pool</label><strong><?php echo htmlspecialchars(poker_format_bytes($table['tournament_prize_pool']), ENT_QUOTES, 'UTF-8'); ?></strong></div>
-                        <div><label>Registered</label><strong><?php echo (int)$table['tournament_entries']; ?> / <?php echo (int)$table['max_seats']; ?></strong></div>
+                    <div class="manage-settings-layout tournament-settings">
+                        <div class="setting-group"><div class="setting-group-title">Entry Fee</div><strong><?php echo htmlspecialchars(poker_format_bytes($table['tournament_entry_fee']), ENT_QUOTES, 'UTF-8'); ?></strong></div>
+                        <div class="setting-group"><div class="setting-group-title">Starting Stack</div><strong><?php echo number_format((int)$table['tournament_starting_stack']); ?> chips</strong></div>
+                        <div class="setting-group"><div class="setting-group-title">Starting Blinds</div><strong><?php echo number_format((int)$table['starting_small_blind']); ?> / <?php echo number_format((int)$table['starting_big_blind']); ?></strong></div>
+                        <div class="setting-group"><div class="setting-group-title">Prize Pool</div><strong><?php echo htmlspecialchars(poker_format_bytes($table['tournament_prize_pool']), ENT_QUOTES, 'UTF-8'); ?></strong></div>
+                        <div class="setting-group"><div class="setting-group-title">Registered</div><strong><?php echo (int)$table['tournament_entries']; ?> / <?php echo (int)$table['max_seats']; ?></strong></div>
                     </div>
                     <?php } ?>
 
@@ -1439,10 +1586,10 @@ if (function_exists('begin_frame')) {
     <select name="user_id" aria-label="Player to kick" required>
         <option value="">Kick player...</option>
         <?php foreach ($kickPlayers as $kickPlayer) { ?>
-            <option value="<?php echo (int) $kickPlayer['user_id']; ?>"><?php echo htmlspecialchars($kickPlayer['username'] . ' · Seat ' . (int)$kickPlayer['seat_no'], ENT_QUOTES, 'UTF-8'); ?></option>
+            <option value="<?php echo (int) $kickPlayer['user_id']; ?>"<?php echo poker_admin_selected($tableTarget, 'user_id', $kickPlayer['user_id']); ?>><?php echo htmlspecialchars($kickPlayer['username'] . ' · Seat ' . (int)$kickPlayer['seat_no'], ENT_QUOTES, 'UTF-8'); ?></option>
         <?php } ?>
     </select>
-    <input type="text" name="kick_reason" maxlength="255" placeholder="Reason (optional)" aria-label="Kick reason" autocomplete="off">
+    <input type="text" name="kick_reason" maxlength="255" placeholder="Reason (optional)" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'kick_reason'), ENT_QUOTES, 'UTF-8'); ?>" aria-label="Kick reason" autocomplete="off">
     <button class="danger-button kick-player-button" type="submit">Kick</button>
 </form>
 <?php } ?>
@@ -1469,6 +1616,26 @@ if (function_exists('begin_frame')) {
 </div>
 
 <script>
+document.querySelectorAll('#poker-admin form').forEach(function (form) {
+    form.addEventListener('focusin', function (event) {
+        var field = event.target;
+        if (field && field.name && field.type !== 'hidden' && field.type !== 'submit') {
+            form.dataset.lastFocusField = field.name;
+        }
+    });
+
+    form.addEventListener('submit', function () {
+        var hidden = form.querySelector('input[name="_focus_field"]');
+        if (!hidden) {
+            hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = '_focus_field';
+            form.appendChild(hidden);
+        }
+        hidden.value = form.dataset.lastFocusField || '';
+    });
+});
+
 document.querySelectorAll('#poker-admin input.clear-placeholder-on-focus[placeholder]').forEach(function (input) {
     input.addEventListener('focus', function () {
         input.dataset.savedPlaceholder = input.placeholder;
@@ -1481,6 +1648,32 @@ document.querySelectorAll('#poker-admin input.clear-placeholder-on-focus[placeho
         }
     });
 });
+
+<?php if ($formError !== '' && $formTarget !== '') { ?>
+(function () {
+    var target = document.getElementById(<?php echo json_encode($formTarget); ?>);
+    if (!target) return;
+
+    target.scrollIntoView({ behavior: 'auto', block: 'center' });
+
+    var focusName = <?php echo json_encode($focusField); ?>;
+    var field = null;
+    if (focusName) {
+        target.querySelectorAll('input, select, textarea, button').forEach(function (candidate) {
+            if (!field && candidate.name === focusName) field = candidate;
+        });
+    }
+    if (!field) {
+        field = target.querySelector('input:not([type="hidden"]), select, textarea, button');
+    }
+    if (field) {
+        window.setTimeout(function () {
+            field.focus({ preventScroll: true });
+            if (typeof field.select === 'function' && field.tagName === 'INPUT') field.select();
+        }, 0);
+    }
+})();
+<?php } ?>
 </script>
 
 <?php
