@@ -3588,7 +3588,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             }
         });
 
-        // Start ambience on first user interaction if enabled
+        // Start ambience on first user interaction (mousedown or keydown) if enabled
         if (ambienceEnabled) {
             startAmbience();
             document.addEventListener('pointerdown', startAmbienceFromInteraction, {
