@@ -2831,29 +2831,40 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
             if (!minBytes || !maxBytes) return;
 
-            if (resetValue) {
-                unitSelect.value = minBytes < GB ? 'MB' : 'GB';
+            var allowMB = minBytes < GB;
+            var allowGB = maxBytes >= GB;
+            var mbOption = unitSelect.querySelector('option[value="MB"]');
+            var gbOption = unitSelect.querySelector('option[value="GB"]');
+
+            mbOption.hidden = !allowMB;
+            mbOption.disabled = !allowMB;
+            gbOption.hidden = !allowGB;
+            gbOption.disabled = !allowGB;
+
+            if (resetValue || (unitSelect.value === 'MB' && !allowMB) || (unitSelect.value === 'GB' && !allowGB)) {
+                unitSelect.value = allowMB ? 'MB' : 'GB';
             }
 
             var unit = unitSelect.value;
-            var minValue = buyinValueForUnit(minBytes, unit);
-            var maxValue = buyinValueForUnit(maxBytes, unit);
+            var divisor = unit === 'MB' ? MB : GB;
 
-            if (unit === 'MB') {
-                input.step = '1';
-                input.min = trimBuyinNumber(minValue, 2);
-                input.max = trimBuyinNumber(maxValue, 2);
+            /*
+             * Buy-ins are whole MB/GB values only.  Clamp the displayed range to
+             * whole values that still fall inside the table's byte limits.
+             */
+            var minValue = Math.ceil(minBytes / divisor);
+            var maxValue = Math.floor(maxBytes / divisor);
 
-                if (resetValue) {
-                    input.value = trimBuyinNumber(minValue, 2);
-                }
+            input.step = '1';
+            input.min = String(minValue);
+            input.max = String(maxValue);
+
+            if (resetValue) {
+                input.value = String(minValue);
             } else {
-                input.step = '0.1';
-                input.min = trimBuyinNumber(minValue, 4);
-                input.max = trimBuyinNumber(maxValue, 4);
-
-                if (resetValue) {
-                    input.value = trimBuyinNumber(minValue, 4);
+                var currentValue = parseInt(input.value || 0, 10);
+                if (!currentValue || currentValue < minValue || currentValue > maxValue) {
+                    input.value = String(minValue);
                 }
             }
         }
@@ -3408,7 +3419,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         });
 
         document.getElementById('buyinUnit').addEventListener('change', function() {
-            configureBuyinInput(true);
+            configureBuyinInput(false);
         });
 
         document.getElementById('confirmSeat').addEventListener('click', function() {
