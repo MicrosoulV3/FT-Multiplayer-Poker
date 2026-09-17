@@ -277,6 +277,25 @@ if (function_exists('begin_frame')) {
         background: #171717;
     }
 
+    #poker-lobby tbody tr.occupied-table td {
+        background: rgba(45, 103, 60, .13);
+        border-bottom-color: #2d4633;
+    }
+
+    #poker-lobby tbody tr.occupied-table td:first-child {
+        box-shadow: inset 3px 0 0 #58a86b;
+    }
+
+    #poker-lobby tbody tr.occupied-table:hover td {
+        background: rgba(54, 124, 72, .2);
+    }
+
+    #poker-lobby .occupied-count {
+        color: #9ee0ad;
+        font-weight: 800;
+        text-shadow: 0 0 10px rgba(88, 168, 107, .28);
+    }
+
     #poker-lobby .table-meta {
         display: block;
         margin-top: 3px;
@@ -693,6 +712,7 @@ if (function_exists('begin_frame')) {
 
     function renderCashTable(body, table, draining) {
         var row = document.createElement('tr');
+        if (parseInt(table.player_count || 0, 10) > 0) row.classList.add('occupied-table');
 
         var nameCell = document.createElement('td');
         var name = document.createElement('span');
@@ -709,6 +729,7 @@ if (function_exists('begin_frame')) {
 
         var players = document.createElement('td');
         players.textContent = table.player_count + ' / ' + table.max_seats;
+        if (parseInt(table.player_count || 0, 10) > 0) players.classList.add('occupied-count');
 
         var watching = document.createElement('td');
         watching.textContent = String(table.spectator_count || 0);
@@ -751,6 +772,7 @@ if (function_exists('begin_frame')) {
 
     function renderTournamentTable(body, table, draining) {
         var row = document.createElement('tr');
+        if (parseInt(table.player_count || 0, 10) > 0) row.classList.add('occupied-table');
 
         var nameCell = document.createElement('td');
         var name = document.createElement('span');
@@ -772,6 +794,7 @@ if (function_exists('begin_frame')) {
 
         var registered = document.createElement('td');
         registered.textContent = table.player_count + ' / ' + table.max_seats;
+        if (parseInt(table.player_count || 0, 10) > 0) registered.classList.add('occupied-count');
 
         var watching = document.createElement('td');
         watching.textContent = String(table.spectator_count || 0);
@@ -821,6 +844,7 @@ if (function_exists('begin_frame')) {
 
     function renderHouseTable(body, table, draining) {
         var row = document.createElement('tr');
+        if (parseInt(table.player_count || 0, 10) > 0) row.classList.add('occupied-table');
 
         var nameCell = document.createElement('td');
         var name = document.createElement('span');
@@ -837,6 +861,7 @@ if (function_exists('begin_frame')) {
 
         var players = document.createElement('td');
         players.textContent = table.player_count + ' Playing';
+        if (parseInt(table.player_count || 0, 10) > 0) players.classList.add('occupied-count');
 
         var blinds = document.createElement('td');
         blinds.textContent = table.small_blind_text + ' / ' + table.big_blind_text;
