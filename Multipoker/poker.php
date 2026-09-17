@@ -1678,7 +1678,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         var MB = <?php echo MB; ?>;
         var GB = <?php echo GB; ?>;
 
-        // Keep the poker interface clean by disabling the browser context menu.
+        // disable the browser context menu.
         document.addEventListener('contextmenu', function(event) {
             event.preventDefault();
         });
@@ -2562,12 +2562,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         }
 
         function fetchState() {
-            /*
-             * Never allow state GETs to overlap. Starting a new poll while an
-             * older one is still running is exactly how out-of-order table
-             * state gets painted into the UI. Skipping one interval is safer
-             * than having two competing responses.
-             */
+
             if (statePollInFlight) return;
 
             statePollInFlight = true;
@@ -2847,11 +2842,6 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
             var unit = unitSelect.value;
             var divisor = unit === 'MB' ? MB : GB;
-
-            /*
-             * Buy-ins are whole MB/GB values only.  Clamp the displayed range to
-             * whole values that still fall inside the table's byte limits.
-             */
             var minValue = Math.ceil(minBytes / divisor);
             var maxValue = Math.floor(maxBytes / divisor);
 
