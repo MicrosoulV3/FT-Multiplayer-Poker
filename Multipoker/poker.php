@@ -1428,14 +1428,18 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     #modern-poker .blind-button.sb { background:linear-gradient(#bc55d7,#6e2186);color:#fff;border:2px solid #e59bf5; }
     #modern-poker .blind-button.bb { background:linear-gradient(#efb52f,#a76508);color:#161008;border:2px solid #ffd86c; }
     #modern-poker .winner-banner {
-        position:absolute;left:50%;top:365px;transform:translate(-50%,8px) scale(.96);width:420px;padding:10px 16px;
+        display:none;width:420px;margin:10px auto 0;padding:10px 16px;
         border:1px solid rgba(255,177,52,.72);border-radius:10px;
         background:linear-gradient(180deg,rgba(45,27,8,.96),rgba(12,8,4,.96));color:#ffbd55;
         box-shadow:0 0 22px rgba(255,155,25,.24),0 8px 18px rgba(0,0,0,.55);
-        text-align:center;font-size:15px;font-weight:800;opacity:0;visibility:hidden;z-index:9;pointer-events:none;
-        transition:opacity .2s ease,transform .2s ease,visibility .2s ease;
+        text-align:center;font-size:15px;font-weight:800;pointer-events:none;
     }
-    #modern-poker .winner-banner.show { opacity:1;visibility:visible;transform:translate(-50%,0) scale(1); }
+    #modern-poker .winner-banner.show { display:block;animation:poker-result-in .2s ease-out; }
+
+    @keyframes poker-result-in {
+        from { opacity:0;transform:translateY(-5px) scale(.98); }
+        to { opacity:1;transform:translateY(0) scale(1); }
+    }
 
 
 #modern-poker .table-status-strip {
@@ -1507,9 +1511,10 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     <div class="poker-layout">
         <div class="poker-play-column">
             <div class="table-wrap" id="pokerTable">
-            <div class="winner-banner" id="winnerBanner"></div>
             <div class="community" id="community"></div>
             </div>
+
+            <div class="winner-banner" id="winnerBanner" role="status" aria-live="polite"></div>
 
             <div class="table-action-strip">
                 <div class="table-action-status">
