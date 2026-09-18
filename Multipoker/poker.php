@@ -1832,6 +1832,11 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         var houseHoleRevealAt = {};
         var houseBoardRevealAt = [];
         var houseOutcomeRevealAt = 0;
+        var multiPresentationHand = 0;
+        var multiHoleRevealAt = {};
+        var multiBoardRevealAt = [];
+        var multiShowdownRevealAt = {};
+        var multiOutcomeRevealAt = 0;
         var soundEnabled = localStorage.getItem('pokerSoundEnabled') !== '0';
         var pokerUserId = root.getAttribute('data-user-id') || '0';
         var ambienceStorageKey = 'pokerAmbienceEnabled_' + pokerUserId;
@@ -2985,6 +2990,108 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             }
         }
 
+        function multiDealCard(img, revealAt) {
+            var remaining = Math.max(0, parseInt(revealAt || 0, 10) - Date.now());
+            if (remaining <= 0) return;
+            img.classList.add('house-card-deal');
+            img.style.animationDelay = remaining + 'ms';
+        }
+
+        function prepareMultiPresentation(previous, state) {
+            if (!state || !state.table || state.table.game_type === 'house') return;
+
+            var handNo = parseInt(state.table.hand_no || 0, 10);
+            var oldHandNo = previous && previous.table ? parseInt(previous.table.hand_no || 0, 10) : 0;
+            var now = Date.now();
+            var seatLimit = Math.max(2, Math.min(10, parseInt(state.table.max_seats || 10, 10)));
+
+            if (handNo > 0 && handNo !== multiPresentationHand) {
+                multiPresentationHand = handNo;
+                multiHoleRevealAt = {};
+                multiBoardRevealAt = [];
+                multiShowdownRevealAt = {};
+                multiOutcomeRevealAt = 0;
+
+                if (handNo > oldHandNo) {
+                    var dealer = parseInt(state.table.dealer_seat || 0, 10);
+                    var activeSeats = [];
+
+                    for (var step = 1; step <= seatLimit; step++) {
+                        var seatNo = ((dealer - 1 + step) % seatLimit) + 1;
+                        var seat = state.seats[seatNo];
+                        if (seat && seat.state !== 'waiting' && seat.cards && seat.cards.length) {
+                            activeSeats.push(seatNo);
+                        }
+                    }
+
+                    var reveal = now + 300;
+                    var gap = 325;
+
+                    for (var cardIndex = 0; cardIndex < 2; cardIndex++) {
+                        activeSeats.forEach(function(seatNo) {
+                            multiHoleRevealAt[seatNo + ':' + cardIndex] = reveal;
+                            reveal += gap;
+                        });
+                    }
+                }
+            }
+
+            var oldBoard = previous && previous.table && Array.isArray(previous.table.community)
+                ? previous.table.community.length
+                : 0;
+            var newBoard = Array.isArray(state.table.community)
+                ? state.table.community.length
+                : 0;
+
+            if (newBoard > oldBoard) {
+                var start = now + 250;
+
+                if (oldBoard === 0 && newBoard >= 5) {
+                    multiBoardRevealAt[0] = start;
+                    multiBoardRevealAt[1] = start + 275;
+                    multiBoardRevealAt[2] = start + 550;
+                    multiBoardRevealAt[3] = start + 1200;
+                    multiBoardRevealAt[4] = start + 1850;
+                    multiOutcomeRevealAt = start + 2250;
+                } else {
+                    for (var i = oldBoard; i < newBoard; i++) {
+                        multiBoardRevealAt[i] = start + ((i - oldBoard) * 275);
+                    }
+                    if (state.table.status === 'showdown') {
+                        multiOutcomeRevealAt = multiBoardRevealAt[newBoard - 1] + 400;
+                    }
+                }
+            }
+
+            if (state.table.status === 'showdown') {
+                var revealStart = Math.max(now + 250, multiOutcomeRevealAt || 0);
+                var revealGap = 325;
+                var revealCount = 0;
+
+                for (var seatNo = 1; seatNo <= seatLimit; seatNo++) {
+                    var currentSeat = state.seats[seatNo];
+                    var previousSeat = previous && previous.seats ? previous.seats[seatNo] : null;
+                    if (!currentSeat || !currentSeat.cards || !currentSeat.cards.length) continue;
+
+                    currentSeat.cards.forEach(function(card, cardIndex) {
+                        var oldCard = previousSeat && previousSeat.cards ? previousSeat.cards[cardIndex] : null;
+                        if (card !== 'BACK' && (!oldCard || oldCard === 'BACK')) {
+                            multiShowdownRevealAt[seatNo + ':' + cardIndex] = revealStart + (revealCount * revealGap);
+                            revealCount++;
+                        }
+                    });
+                }
+
+                if (revealCount > 0) {
+                    multiOutcomeRevealAt = revealStart + (revealCount * revealGap) + 250;
+                } else if (multiOutcomeRevealAt === 0) {
+                    multiOutcomeRevealAt = now + 450;
+                }
+
+                window.setTimeout(fetchState, Math.max(0, multiOutcomeRevealAt - now) + 50);
+            }
+        }
+
         function makeHole(seatNo, cards, isHouse) {
             if (!cards || !cards.length) return null;
             var el = document.createElement('div');
@@ -2997,6 +3104,11 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 img.alt = card === 'BACK' ? 'Face-down card' : card;
                 if (isHouse) {
                     houseDealCard(img, houseHoleRevealAt[seatNo + ':' + cardIndex] || 0);
+                } else {
+                    multiDealCard(img,
+                        multiShowdownRevealAt[seatNo + ':' + cardIndex] ||
+                        multiHoleRevealAt[seatNo + ':' + cardIndex] || 0
+                    );
                 }
                 el.appendChild(img);
             });
@@ -3215,6 +3327,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             var previousState = lastState;
             var isHouse = state.table.game_type === 'house';
             prepareHousePresentation(previousState, state);
+            prepareMultiPresentation(previousState, state);
             soundForStateChange(previousState, state);
             lastState = state;
 
@@ -3281,6 +3394,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 img.alt = card;
                 if (isHouse) {
                     houseDealCard(img, houseBoardRevealAt[cardIndex] || 0);
+                } else {
+                    multiDealCard(img, multiBoardRevealAt[cardIndex] || 0);
                 }
                 document.getElementById('community').appendChild(img);
             });
@@ -3323,6 +3438,14 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 tableMessage = state.table.community && state.table.community.length
                     ? 'Dealing the board...'
                     : 'The Collector is settling the hand...';
+            } else if (
+                !isHouse &&
+                state.table.status === 'showdown' &&
+                multiOutcomeRevealAt > Date.now()
+            ) {
+                tableMessage = state.table.community && state.table.community.length
+                    ? 'Dealing the board...'
+                    : 'Revealing the hands...';
             }
 
             var playersNeeded = isHouse ? 1 : 2;
