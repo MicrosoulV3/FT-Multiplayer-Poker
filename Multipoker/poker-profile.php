@@ -1,6 +1,6 @@
 <?php
 /*
- * FastTracker Poker - Player Profile / Achievements
+ * FastTracker Poker - Player Profile
  */
 
 require_once("backend/functions.php");
