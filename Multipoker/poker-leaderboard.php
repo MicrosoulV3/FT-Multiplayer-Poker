@@ -1,7 +1,7 @@
 <?php
 /*
  * FastTracker Poker - Player Statistics / Leaderboard
- */
+ */ 
 
 require_once("backend/functions.php");
 
