@@ -1,7 +1,4 @@
 <?php
-/*
- * Multiplayer Poker rewrite - PHP 7.4+
- */
 
 if (!defined('KB')) {
     define('KB', 1024);
@@ -351,10 +348,6 @@ function poker_blinds_for_hand($handNo, $startingSmallBlind, $startingBigBlind, 
 
     $level = (int) floor(($handNo - 1) / $handsPerLevel);
 
-    /*
-     * Same escalation curve as the original 100 MB / 200 MB schedule,
-     * now scaled from each table's configured starting blinds.
-     */
     $multipliers = array(
         1.0,
         1.5,
@@ -456,10 +449,6 @@ function poker_active_game_for_user($db, $userId)
 {
     $userId = (int) $userId;
 
-    /*
-     * Normal multiplayer and tournament seats live in poker_seats.
-     * A player may have only one active poker game at a time.
-     */
     $stmt = $db->prepare("\n        SELECT\n            s.table_id,\n            t.name,\n            t.game_type\n        FROM poker_seats s\n        INNER JOIN poker_tables t ON t.id = s.table_id\n        WHERE s.user_id = ?\n        ORDER BY s.table_id ASC\n        LIMIT 1\n    ");
     $stmt->bind_param('i', $userId);
     $stmt->execute();
@@ -1174,11 +1163,7 @@ function poker_join($db, $tableId, $seatNo, $buyin, $user)
 
     $db->begin_transaction();
     try {
-        /*
-         * Lock the global poker settings row before seating a player.
-         * The admin maintenance toggle locks this same row, preventing
-         * a join from racing the maintenance switch.
-         */
+
         $settings = poker_lock_settings($db);
 
         if ((int) $settings['maintenance_mode'] !== 0) {
@@ -1216,13 +1201,6 @@ function poker_join($db, $tableId, $seatNo, $buyin, $user)
             }
         }
 
-        /*
-         * If this is the first player joining an empty table, wipe any
-         * leftover state from the previous poker session before seating them.
-         * This prevents old community cards, winner text, dealer position,
-         * from reappearing the instant Buy In is clicked.
-         * Hand numbers intentionally remain monotonic for persistent history.
-         */
         if (count($seats) === 0) {
             $emptyDeck = '[]';
             $emptyCommunity = '[]';
