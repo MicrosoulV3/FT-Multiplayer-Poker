@@ -601,6 +601,25 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         border-bottom: 0;
     }
 
+    #modern-poker #viewMode.collector-mode {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        min-height: 34px;
+    }
+
+    #modern-poker .collector-mode-emblem {
+        display: block;
+        width: 112px;
+        height: 34px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 5px rgba(255, 85, 10, .48));
+    }
+
+    #modern-poker .collector-mode-emblem[hidden] {
+        display: none !important;
+    }
+
     #modern-poker input[type=number] {
         width: 100%;
         padding: 8px;
@@ -823,33 +842,6 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             0 0 18px rgba(255, 140, 0, .06);
     }
 
-    #modern-poker .chat-panel-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
-
-    #modern-poker .chat-panel-head h3 {
-        margin: 0;
-        color: #ffb347;
-    }
-
-    #modern-poker .chat-live-label {
-        display: inline-flex;
-        align-items: center;
-        min-height: 20px;
-        padding: 3px 7px;
-        border: 1px solid rgba(255, 140, 0, .42);
-        border-radius: 10px;
-        background: rgba(255, 140, 0, .08);
-        color: #d9a15c;
-        font-size: 8px;
-        font-weight: 800;
-        letter-spacing: .8px;
-    }
-
     #modern-poker .chat-log {
         height: 155px;
         overflow-y: auto;
@@ -871,7 +863,33 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     }
 
     #modern-poker .player-chat-label {
-        margin-top: 10px;
+        margin: 0 0 6px;
+        color: #78c9ff;
+        text-shadow: 0 0 8px rgba(67, 174, 238, .28);
+    }
+
+    #modern-poker .player-chat-section {
+        margin-top: 11px;
+        padding: 9px;
+        border: 1px solid rgba(70, 164, 220, .58);
+        border-radius: 5px;
+        background: linear-gradient(180deg, rgba(13, 29, 40, .92), rgba(9, 16, 21, .96));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.025), 0 0 13px rgba(48, 148, 210, .08);
+    }
+
+    #modern-poker .player-chat-section .chat-log {
+        border-color: #24475d;
+        background: #091016;
+    }
+
+    #modern-poker .player-chat-section .chat-compose input:focus {
+        border-color: #4299cc;
+        box-shadow: 0 0 0 2px rgba(66, 153, 204, .13);
+    }
+
+    #modern-poker #chatMessage:focus::placeholder {
+        color: transparent;
+        opacity: 0;
     }
 
     #modern-poker .dealer-log {
@@ -1669,23 +1687,21 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
         <div>
             <div class="panel chat-panel prominent-chat" id="chatPanel">
-                <div class="chat-panel-head">
-                    <h3>Table Info</h3>
-                    <span class="chat-live-label">LIVE TABLE</span>
-                </div>
-
+                <div class="chat-section-label">Table Announcements</div>
                 <div class="dealer-log" id="dealerLog">
                     <div class="chat-empty">No table announcements yet.</div>
                 </div>
-                <div class="chat-section-label player-chat-label">Player Chat</div>
-                <div class="chat-log" id="chatLog">
-                    <div class="chat-empty">No player messages yet.</div>
+                <div class="player-chat-section">
+                    <div class="chat-section-label player-chat-label">Player Chat</div>
+                    <div class="chat-log" id="chatLog">
+                        <div class="chat-empty">No player messages yet.</div>
+                    </div>
+                    <div class="chat-compose">
+                        <input type="text" id="chatMessage" maxlength="300" autocomplete="off" placeholder="Sit down to chat..." disabled>
+                        <button type="button" class="primary" id="chatSend" disabled>Send</button>
+                    </div>
+                    <div class="chat-counter"><span id="chatCount">0</span>/300</div>
                 </div>
-                <div class="chat-compose">
-                    <input type="text" id="chatMessage" maxlength="300" autocomplete="off" placeholder="Sit down to chat..." disabled>
-                    <button type="button" class="primary" id="chatSend" disabled>Send</button>
-                </div>
-                <div class="chat-counter"><span id="chatCount">0</span>/300</div>
             </div>
 
             <div class="panel">
@@ -1701,7 +1717,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     <div class="info-row"><span>Registered</span><strong id="tournamentRegistered">-</strong></div>
                     <div class="info-row"><span>Prize Pool</span><strong id="tournamentPrize">-</strong></div>
                 </div>
-                <div class="info-row"><span>Mode</span><strong id="viewMode" class="spectator-mode">Spectating</strong></div>
+                <div class="info-row"><span>Mode</span><strong id="viewMode" class="spectator-mode"><span id="viewModeText">Spectating</span><img class="collector-mode-emblem" id="collectorModeEmblem" src="images/poker/collector-mode-emblem.webp" alt="The Collector" title="The Collector" hidden></strong></div>
                 <div class="info-row"><span>Your seat</span><strong id="mySeat">Not seated</strong></div>
                 <div class="info-row"><span>Your stack</span><strong id="myStack">-</strong></div>
                 <div class="spectator-summary" id="spectatorSummary">
@@ -1722,8 +1738,6 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     </div>
                     <div class="action-group action-navigation">
                         <button type="button" class="history-open action-wide" id="historyOpen">Hand History</button>
-                        <a class="poker-link-button" href="poker-leaderboard.php">Leaderboard</a>
-                        <a class="poker-link-button" href="poker-profile.php">My Profile</a>
                     </div>
                 </div>
             </div>
@@ -3367,6 +3381,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             document.getElementById('myStack').textContent = me ? me.stack_text : '-';
 
             var viewMode = document.getElementById('viewMode');
+            var viewModeText = document.getElementById('viewModeText');
+            var collectorModeEmblem = document.getElementById('collectorModeEmblem');
             var waitingForNextHand = !!(
                 me &&
                 me.state === 'waiting' &&
@@ -3374,12 +3390,20 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 state.table.status === 'playing'
             );
 
-            if (waitingForNextHand) {
-                viewMode.textContent = 'Waiting Next Hand';
-                viewMode.className = 'player-mode';
+            if (isHouse) {
+                viewModeText.hidden = true;
+                collectorModeEmblem.hidden = false;
+                viewMode.className = (state.me.seat ? 'player-mode' : 'spectator-mode') + ' collector-mode';
             } else {
-                viewMode.textContent = isHouse ? (state.me.seat ? 'Playing The Collector' : 'The Collector') : (state.me.seat ? 'Playing' : 'Spectating');
-                viewMode.className = state.me.seat ? 'player-mode' : 'spectator-mode';
+                viewModeText.hidden = false;
+                collectorModeEmblem.hidden = true;
+                if (waitingForNextHand) {
+                    viewModeText.textContent = 'Waiting Next Hand';
+                    viewMode.className = 'player-mode';
+                } else {
+                    viewModeText.textContent = state.me.seat ? 'Playing' : 'Spectating';
+                    viewMode.className = state.me.seat ? 'player-mode' : 'spectator-mode';
+                }
             }
 
             document.getElementById('spectatorSummary').style.display = isHouse ? 'none' : '';
