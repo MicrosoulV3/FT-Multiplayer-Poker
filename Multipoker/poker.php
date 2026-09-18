@@ -955,6 +955,42 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         text-decoration: none;
     }
 
+    #modern-poker .poker-link-button.gameplay-disabled {
+        opacity: .45;
+        pointer-events: none;
+        cursor: not-allowed;
+        filter: grayscale(.45);
+    }
+
+    #modern-poker .poker-lobby-return {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 43px;
+        margin: -2px 0 12px;
+        padding: 9px 14px;
+        border: 1px solid #a96d20;
+        border-radius: 6px;
+        background: linear-gradient(180deg, #563817, #35220f);
+        color: #ffd38a;
+        box-shadow: 0 5px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.05);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .2px;
+    }
+
+    #modern-poker .poker-lobby-return[hidden] {
+        display: none !important;
+    }
+
+    #modern-poker .poker-lobby-return:hover {
+        border-color: #d49438;
+        background: linear-gradient(180deg, #70491c, #452c12);
+        color: #fff0c6;
+    }
+
     #modern-poker .history-open {
         width: 100%;
         margin-top: 0;
@@ -1656,13 +1692,14 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                         <button type="button" id="ambienceToggle" aria-pressed="true">Room Ambience: On</button>
                     </div>
                     <div class="action-group action-navigation">
-                        <a class="poker-link-button" href="poker-lobby.php">Poker Lobby</a>
-                        <button type="button" class="history-open" id="historyOpen">Hand History</button>
+                        <button type="button" class="history-open action-wide" id="historyOpen">Hand History</button>
                         <a class="poker-link-button" href="poker-leaderboard.php">Leaderboard</a>
                         <a class="poker-link-button" href="poker-profile.php">My Profile</a>
                     </div>
                 </div>
             </div>
+
+            <a class="poker-lobby-return" id="pokerLobbyReturn" href="poker-lobby.php" hidden>&#8592; Return to Poker Lobby</a>
 
             <div class="panel buyin-box" id="buyinBox">
                 <h3>Take Seat <span id="selectedSeat"></span></h3>
@@ -3241,6 +3278,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 : (isHouse ? ('The Collector · Buy-in: ' + state.table.min_buyin_text + ' to ' + state.table.max_buyin_text) : ('Buy-in: ' + state.table.min_buyin_text + ' to ' + state.table.max_buyin_text));
 
             var me = state.me.seat ? state.seats[state.me.seat] : null;
+            var pokerLobbyReturn = document.getElementById('pokerLobbyReturn');
+            pokerLobbyReturn.hidden = !!state.me.seat;
 
             if (isHouse && me && state.table.status !== 'playing') {
                 var housePlayerStack = parseInt(me.stack || 0, 10);
@@ -3332,6 +3371,23 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 state.table.status === 'playing' ||
                 (isTournament && state.table.tournament_status !== 'running') ||
                 (state.maintenance && state.maintenance.draining);
+
+            var sidebarLocked = !!(
+                state.me.seat &&
+                (state.table.status === 'playing' || state.table.status === 'showdown')
+            );
+
+            document.querySelectorAll('#modern-poker .action-gameplay button, #modern-poker .action-navigation button').forEach(function(button) {
+                if (sidebarLocked) {
+                    button.disabled = true;
+                }
+            });
+
+            document.querySelectorAll('#modern-poker .action-navigation a').forEach(function(link) {
+                link.classList.toggle('gameplay-disabled', sidebarLocked);
+                link.setAttribute('aria-disabled', sidebarLocked ? 'true' : 'false');
+                link.tabIndex = sidebarLocked ? -1 : 0;
+            });
 
             var currentTurnSeat = state.table.current_turn ? state.seats[state.table.current_turn] : null;
             var reconnectGraceActive = !!(currentTurnSeat && currentTurnSeat.reconnecting);
