@@ -1634,11 +1634,6 @@ function poker_leave($db, $tableId, $userId)
             $isTournament ? ($leavingUsername . ' leaves the tournament table.') : ($leavingUsername . ' leaves the table with ' . poker_format_bytes($stack) . '.')
         );
 
-        /*
-         * Leaving is only allowed outside an active hand. Once somebody
-         * leaves, retire the completed hand so a later join starts from a
-         * genuinely clean table instead of inheriting showdown state.
-         */
         $emptyDeck = json_encode(array());
         $emptyCommunity = json_encode(array());
         $waitingMessage = 'Waiting for players.';
@@ -1660,11 +1655,6 @@ function poker_leave($db, $tableId, $userId)
         $stmt->execute();
         $stmt->close();
 
-        /*
-         * If the last player has left, reset the table completely so the
-         * next group starts with a clean table. The hand counter is preserved
-         * so persistent hand-history identifiers are never reused.
-         */
         $stmt = $db->prepare('SELECT COUNT(*) AS players FROM poker_seats WHERE table_id=?');
         $stmt->bind_param('i', $tableId);
         $stmt->execute();
@@ -1686,7 +1676,6 @@ function poker_leave($db, $tableId, $userId)
         poker_finalize_maintenance_if_empty($db);
     } catch (Throwable $e) {
         if ($db->errno === 0) {
-            // Transaction may already be committed; rollback is harmless only while active.
         }
         try { $db->rollback(); } catch (Throwable $ignored) {}
         throw $e;
@@ -1914,10 +1903,6 @@ function poker_record_player_stats($db, $seats, $awards, $showdownReached)
 
         $handState = isset($seat['hand_state']) ? (string) $seat['hand_state'] : 'waiting';
 
-        /*
-         * Sitting-out / waiting seats were not dealt into this hand and
-         * therefore do not count as hands played.
-         */
         if ($handState === 'waiting') {
             continue;
         }
@@ -2467,18 +2452,6 @@ function poker_house_strength($seat, $community)
     return max(0.05, min(0.99, $strength));
 }
 
-/*
- * Estimate the House hand's equity against an unknown random opponent hand.
- *
- * IMPORTANT:
- * - This never reads the player's hole cards.
- * - It removes only cards the House is legitimately allowed to know:
- *   its own hole cards and the public board.
- * - It then samples possible opponent cards and remaining board cards.
- *
- * This makes large-bet/all-in decisions behave like poker decisions instead
- * of a crude "strength number + random roll".
- */
 function poker_house_estimated_equity($hole1, $hole2, $community, $trials = 180)
 {
     $community = is_array($community) ? array_values($community) : array();
@@ -3278,14 +3251,7 @@ function poker_public_state($db, $tableId, $userId)
     );
 }
 
-/*
- * Instanced House Hold'em
- * -----------------------
- * House tables in poker_tables are templates/configuration only. Each user gets
- * an independent persistent session in poker_house_sessions, so any number of
- * users can play the same House table at the same time without sharing cards,
- * pots, turns, or stacks.
- */
+
 function poker_house_session_row($db, $templateId, $userId, $forUpdate = false)
 {
     $sql = 'SELECT * FROM poker_house_sessions WHERE template_id=? AND user_id=? AND active=1 LIMIT 1';
@@ -3813,10 +3779,6 @@ function poker_house_session_bot_turn($db, $templateId, $userId)
         (int)$state['current_bet'] +
         max(1, (int)$state['min_raise']);
 
-    /*
-     * Equity is estimated without ever looking at the player's cards.
-     * More trials are used when real money is effectively on the line.
-     */
     $pressure = $call > 0
         ? $call / max(1, $stack)
         : 0.0;
@@ -3844,15 +3806,6 @@ function poker_house_session_bot_turn($db, $templateId, $userId)
         $pot = poker_house_hand_pot($state);
         $potOdds = $call / max(1, $pot + $call);
 
-        /*
-         * The old bot folded some weak hands, then blindly called almost
-         * everything else. Repeated all-ins exploited that behavior.
-         *
-         * Now the House compares estimated showdown equity to the price of
-         * the call. A shove gets only a small safety margin; ordinary bets
-         * get a slightly larger one. A tiny random wobble keeps the bot from
-         * being completely deterministic without turning it into a coin flip.
-         */
         if ($isShove) {
             $margin = 0.025;
             $wobble = ($roll - 0.5) * 0.030;
@@ -3869,10 +3822,6 @@ function poker_house_session_bot_turn($db, $templateId, $userId)
 
         $callThreshold = min(0.92, $potOdds + $margin);
 
-        /*
-         * Do not re-raise a player who is already all-in. Against a normal
-         * bet, strong equity can still produce a value raise.
-         */
         if (
             !$isShove &&
             $equity >= 0.72 &&
@@ -3929,10 +3878,6 @@ function poker_house_session_bot_turn($db, $templateId, $userId)
         return;
     }
 
-    /*
-     * When nobody has bet, use equity rather than the old raw hand-category
-     * score. This accounts for draws and board texture as the hand develops.
-     */
     if ($maxTo >= $minimumRaiseTo) {
         if ($equity >= 0.78 && $roll <= 0.70) {
             $bigBlind = isset($state['hand_big_blind'])
@@ -3971,9 +3916,7 @@ function poker_house_session_bot_turn($db, $templateId, $userId)
             return;
         }
 
-        /*
-         * Small bluff frequency so the House is not completely face-up.
-         */
+
         if ($equity < 0.42 && $roll <= 0.055) {
             poker_house_session_action(
                 $db,
