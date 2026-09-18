@@ -851,13 +851,38 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     }
 
     #modern-poker .chat-log {
-        height: 215px;
+        height: 155px;
         overflow-y: auto;
         padding: 8px;
         border: 1px solid #292929;
         background: #0e0e0e;
         border-radius: 4px;
         font-size: 12px;
+        line-height: 1.35;
+    }
+
+    #modern-poker .chat-section-label {
+        margin: 0 0 5px;
+        color: #8c8c8c;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: .9px;
+        text-transform: uppercase;
+    }
+
+    #modern-poker .player-chat-label {
+        margin-top: 10px;
+    }
+
+    #modern-poker .dealer-log {
+        height: 96px;
+        overflow-y: auto;
+        padding: 7px;
+        border: 1px solid rgba(185, 132, 48, .48);
+        border-radius: 4px;
+        background: linear-gradient(180deg, #18140d, #100f0d);
+        box-shadow: inset 0 0 14px rgba(177, 112, 24, .06);
+        font-size: 11px;
         line-height: 1.35;
     }
 
@@ -872,13 +897,13 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
     #modern-poker .chat-line.dealer-message {
         padding: 5px 7px;
-        border-left: 2px solid #6f8f67;
-        background: #151915;
+        border-left: 2px solid #b77b28;
+        background: rgba(75, 48, 16, .22);
         border-radius: 3px;
     }
 
     #modern-poker .chat-line.dealer-message .chat-name {
-        color: #9fca92;
+        color: #e3ad55;
     }
 
     #modern-poker .chat-time {
@@ -917,7 +942,12 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     #modern-poker .chat-empty {
         color: #666;
         text-align: center;
-        padding-top: 65px;
+        padding-top: 45px;
+    }
+
+    #modern-poker .dealer-log .chat-empty {
+        padding-top: 30px;
+        color: #705f45;
     }
 
     #modern-poker .chat-compose {
@@ -1640,11 +1670,16 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         <div>
             <div class="panel chat-panel prominent-chat" id="chatPanel">
                 <div class="chat-panel-head">
-                    <h3>Table Chat</h3>
+                    <h3>Table Info</h3>
                     <span class="chat-live-label">LIVE TABLE</span>
                 </div>
+
+                <div class="dealer-log" id="dealerLog">
+                    <div class="chat-empty">No table announcements yet.</div>
+                </div>
+                <div class="chat-section-label player-chat-label">Player Chat</div>
                 <div class="chat-log" id="chatLog">
-                    <div class="chat-empty">No messages yet.</div>
+                    <div class="chat-empty">No player messages yet.</div>
                 </div>
                 <div class="chat-compose">
                     <input type="text" id="chatMessage" maxlength="300" autocomplete="off" placeholder="Sit down to chat..." disabled>
@@ -2602,25 +2637,60 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
         function renderChat(messages) {
             var log = document.getElementById('chatLog');
+            var dealerLog = document.getElementById('dealerLog');
             var canModerateChat = document.getElementById('modern-poker').dataset.canModerateChat === '1';
             var shouldStickToBottom = (log.scrollHeight - log.scrollTop - log.clientHeight) < 30;
+            var shouldStickDealerToBottom = (dealerLog.scrollHeight - dealerLog.scrollTop - dealerLog.clientHeight) < 30;
             var newestId = messages.length ? messages[messages.length - 1].id : 0;
             var hasNewMessage = newestId > lastChatId;
+            var dealerMessages = messages.filter(function(message) {
+                return parseInt(message.user_id || 0, 10) === 0;
+            });
+            var playerMessages = messages.filter(function(message) {
+                return parseInt(message.user_id || 0, 10) > 0;
+            });
 
             log.innerHTML = '';
+            dealerLog.innerHTML = '';
 
-            if (!messages.length) {
+            if (!dealerMessages.length) {
+                var dealerEmpty = document.createElement('div');
+                dealerEmpty.className = 'chat-empty';
+                dealerEmpty.textContent = 'No table announcements yet.';
+                dealerLog.appendChild(dealerEmpty);
+            } else {
+                dealerMessages.forEach(function(message) {
+                    var line = document.createElement('div');
+                    line.className = 'chat-line dealer-message';
+
+                    var time = document.createElement('span');
+                    time.className = 'chat-time';
+                    time.textContent = message.time;
+
+                    var name = document.createElement('span');
+                    name.className = 'chat-name';
+                    name.textContent = (message.username || 'Dealer') + ':';
+
+                    var body = document.createElement('span');
+                    body.className = 'chat-text';
+                    body.textContent = message.message;
+
+                    line.appendChild(time);
+                    line.appendChild(name);
+                    line.appendChild(body);
+                    dealerLog.appendChild(line);
+                });
+            }
+
+            if (!playerMessages.length) {
                 var empty = document.createElement('div');
                 empty.className = 'chat-empty';
-                empty.textContent = 'No messages yet.';
+                empty.textContent = 'No player messages yet.';
                 log.appendChild(empty);
             } else {
-                messages.forEach(function(message) {
+                playerMessages.forEach(function(message) {
                     var line = document.createElement('div');
                     line.className = 'chat-line';
-                    if (parseInt(message.user_id || 0, 10) === 0 && message.username === 'Dealer') {
-                        line.classList.add('dealer-message');
-                    }
 
                     var time = document.createElement('span');
                     time.className = 'chat-time';
@@ -2634,8 +2704,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     body.className = 'chat-text';
                     body.textContent = message.message;
 
-                    var isSystemMessage = parseInt(message.user_id || 0, 10) === 0;
-                    if (canModerateChat && !isSystemMessage) {
+                    if (canModerateChat) {
                         var deleteButton = document.createElement('button');
                         deleteButton.type = 'button';
                         deleteButton.className = 'chat-delete-button';
@@ -2661,6 +2730,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
             if (shouldStickToBottom || hasNewMessage) {
                 log.scrollTop = log.scrollHeight;
+            }
+            if (shouldStickDealerToBottom || hasNewMessage) {
+                dealerLog.scrollTop = dealerLog.scrollHeight;
             }
 
             lastChatId = Math.max(lastChatId, newestId);
