@@ -131,8 +131,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         border: 1px solid #383838;
         border-top-color: rgba(242, 162, 58, .72);
         border-radius: 6px;
-        background: linear-gradient(180deg, rgba(21, 21, 21, .98), rgba(10, 10, 10, .98));
-        box-shadow: 0 8px 20px rgba(0, 0, 0, .28);
+        background: linear-gradient(180deg, rgba(21,21,21,.98), rgba(10,10,10,.98));
+        box-shadow: 0 8px 20px rgba(0,0,0,.28);
     }
 
     #modern-poker .table-action-status {
@@ -152,7 +152,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         border: 1px solid rgba(242, 162, 58, .48);
         border-radius: 5px;
         background: rgba(12, 12, 12, .96);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
         pointer-events: none;
     }
 
@@ -270,7 +270,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         border: 1px solid #303030;
         border-radius: 5px;
         background: rgba(10, 10, 10, .94);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
     }
 
     #modern-poker .table-status-label {
@@ -475,7 +475,6 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             opacity: 0;
             transform: translateY(-18px) rotate(-2deg) scale(.97);
         }
-
         to {
             opacity: 1;
             transform: translateY(0) rotate(0deg) scale(1);
@@ -529,7 +528,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         border: 1px solid rgba(242, 162, 58, .38);
         border-radius: 8px;
         background: linear-gradient(180deg, rgba(28, 22, 14, .92), rgba(8, 8, 8, .94));
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
     }
 
     #modern-poker .table-status-panel span {
@@ -556,8 +555,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         border-color: #e2a43d;
         background: linear-gradient(180deg, rgba(92, 61, 18, .96), rgba(24, 17, 8, .97));
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, .08),
-            0 0 14px rgba(226, 164, 61, .20);
+            inset 0 1px 0 rgba(255,255,255,.08),
+            0 0 14px rgba(226,164,61,.20);
         text-align: center;
     }
 
@@ -634,10 +633,34 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     }
 
     #modern-poker .actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 7px;
+        display: grid;
+        gap: 8px;
         margin-top: 10px;
+    }
+
+    #modern-poker .action-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    #modern-poker .action-group + .action-group {
+        padding-top: 8px;
+        border-top: 1px solid #2b2b2b;
+    }
+
+    #modern-poker .action-group > button,
+    #modern-poker .action-group > .poker-link-button {
+        width: 100%;
+        min-width: 0;
+        min-height: 36px;
+        padding: 7px 6px;
+        text-align: center;
+        font-size: 11px;
+    }
+
+    #modern-poker .action-group .action-wide {
+        grid-column: 1 / -1;
     }
 
     #modern-poker .actions .danger {
@@ -796,7 +819,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         background:
             linear-gradient(180deg, rgba(34, 25, 13, .96), rgba(14, 14, 14, .98));
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, .035),
+            inset 0 1px 0 rgba(255,255,255,.035),
             0 0 18px rgba(255, 140, 0, .06);
     }
 
@@ -934,7 +957,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
     #modern-poker .history-open {
         width: 100%;
-        margin-top: 8px;
+        margin-top: 0;
     }
 
     .poker-history-overlay {
@@ -1121,262 +1144,230 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     }
 
     #modern-poker .buyin-entry {
-        display: grid;
-        grid-template-columns: 1fr 72px;
-        gap: 7px;
-        margin: 10px 0;
-    }
+    display: grid;
+    grid-template-columns: 1fr 72px;
+    gap: 7px;
+    margin: 10px 0;
+}
+#modern-poker .buyin-entry input,
+#modern-poker .buyin-entry select {
+    width: 100%;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #0c0c0c;
+    color: #fff;
+    font-size: 14px;
+}
+#modern-poker .buyin-entry input:focus,
+#modern-poker .buyin-entry select:focus {
+    outline: none;
+    border-color: #5c9fd6;
+}
+#modern-poker .spectator-summary {
+    margin-top: 9px;
+}
+#modern-poker .spectator-summary-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 11px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    background: #101010;
+    color: #aaa;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+#modern-poker .spectator-summary-button:hover {
+    border-color: #4a4a4a;
+    background: #151515;
+}
+#modern-poker .spectator-summary-button strong {
+    color: #fff;
+    font-size: 12px;
+}
+.poker-spectator-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10020;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    background: rgba(0, 0, 0, .68);
+}
+.poker-spectator-overlay.open {
+    display: flex;
+}
 
-    #modern-poker .buyin-entry input,
-    #modern-poker .buyin-entry select {
-        width: 100%;
-        min-width: 0;
-        padding: 8px;
-        border: 1px solid #444;
-        border-radius: 4px;
-        background: #0c0c0c;
-        color: #fff;
-        font-size: 14px;
-    }
-
-    #modern-poker .buyin-entry input:focus,
-    #modern-poker .buyin-entry select:focus {
-        outline: none;
-        border-color: #5c9fd6;
-    }
-
-    #modern-poker .spectator-summary {
-        margin-top: 9px;
-    }
-
-    #modern-poker .spectator-summary-button {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        padding: 9px 11px;
-        border: 1px solid #333;
-        border-radius: 4px;
-        background: #101010;
-        color: #aaa;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        cursor: pointer;
-    }
-
-    #modern-poker .spectator-summary-button:hover {
-        border-color: #4a4a4a;
-        background: #151515;
-    }
-
-    #modern-poker .spectator-summary-button strong {
-        color: #fff;
-        font-size: 12px;
-    }
-
-    .poker-spectator-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 10020;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 30px;
-        background: rgba(0, 0, 0, .68);
-    }
-
-    .poker-spectator-overlay.open {
-        display: flex;
-    }
-
-    .poker-house-broke-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 10040;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 30px;
-        background: rgba(0, 0, 0, .72);
-    }
-
-    .poker-house-broke-overlay.open {
-        display: flex;
-    }
-
-    .poker-user-notice-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 10050;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 30px;
-        background: rgba(0, 0, 0, .74);
-    }
-
-    .poker-user-notice-overlay.open {
-        display: flex;
-    }
-
-    .poker-user-notice-popout {
-        width: min(560px, calc(100vw - 60px));
-        padding: 24px 26px 22px;
-        border: 1px solid #8a4a32;
-        border-radius: 9px;
-        background: linear-gradient(180deg, #1d1310, #0f0f0f);
-        box-shadow: 0 20px 80px rgba(0, 0, 0, .76);
-        color: #ddd;
-        text-align: center;
-    }
-
-    .poker-user-notice-popout strong {
-        display: block;
-        margin-bottom: 10px;
-        color: #ffad89;
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: 1.2px;
-        text-transform: uppercase;
-    }
-
-    .poker-user-notice-message {
-        margin: 0 0 18px;
-        color: #f2f2f2;
-        font-size: 18px;
-        font-weight: 700;
-        line-height: 1.5;
-        white-space: pre-wrap;
-    }
-
-    .poker-user-notice-close {
-        min-width: 110px;
-        padding: 8px 16px;
-        border: 1px solid #684040;
-        border-radius: 5px;
-        background: #3b2020;
-        color: #efaaaa;
-        font-weight: 800;
-        cursor: pointer;
-    }
-
-    .poker-user-notice-close:hover {
-        border-color: #8a4a32;
-        background: #4a2519;
-    }
-
-    .poker-house-broke-popout {
-        width: min(500px, calc(100vw - 60px));
-        padding: 24px 26px 22px;
-        border: 1px solid #9b742f;
-        border-radius: 9px;
-        background: linear-gradient(180deg, #1b1710, #0f0f0f);
-        box-shadow: 0 20px 80px rgba(0, 0, 0, .72);
-        color: #ddd;
-        text-align: center;
-    }
-
-    .poker-house-broke-popout strong {
-        display: block;
-        margin-bottom: 10px;
-        color: #d8a84e;
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: 1.2px;
-        text-transform: uppercase;
-    }
-
-    .poker-house-broke-message {
-        margin: 0 0 18px;
-        color: #f2f2f2;
-        font-size: 21px;
-        font-weight: 800;
-        line-height: 1.35;
-        text-shadow: 0 1px 2px #000;
-    }
-
-    .poker-house-broke-close {
-        min-width: 110px;
-        padding: 8px 16px;
-        border: 1px solid #4a4a4a;
-        border-radius: 5px;
-        background: #181818;
-        color: #ddd;
-        font-weight: 800;
-        cursor: pointer;
-    }
-
-    .poker-house-broke-close:hover {
-        border-color: #6a6a6a;
-        background: #202020;
-    }
-
-    .poker-spectator-popout {
-        width: min(380px, calc(100vw - 60px));
-        max-height: min(520px, calc(100vh - 60px));
-        overflow: hidden;
-        border: 1px solid #3a3a3a;
-        border-radius: 8px;
-        background: #151515;
-        box-shadow: 0 18px 70px rgba(0, 0, 0, .65);
-        color: #ddd;
-    }
-
-    .poker-spectator-popout-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 13px 15px;
-        border-bottom: 1px solid #303030;
-        background: #101010;
-    }
-
-    .poker-spectator-popout-head strong {
-        color: #fff;
-        font-size: 15px;
-    }
-
-    .poker-spectator-popout-head span {
-        color: #888;
-        font-size: 12px;
-    }
-
-    .poker-spectator-list {
-        max-height: 430px;
-        overflow-y: auto;
-        padding: 7px 0;
-    }
-
-    .poker-spectator-person,
-    .poker-spectator-empty {
-        padding: 9px 15px;
-        border-bottom: 1px solid #242424;
-        color: #ddd;
-        font-size: 13px;
-    }
-
-    .poker-spectator-person:last-child {
-        border-bottom: 0;
-    }
-
-    .poker-spectator-empty {
-        border-bottom: 0;
-        color: #777;
-        text-align: center;
-    }
-
-    #modern-poker .spectator-mode {
-        color: #d9b96e;
-    }
-
-    #modern-poker .player-mode {
-        color: #8ed399;
-    }
-
-    #modern-poker .muted {
+.poker-house-broke-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10040;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    background: rgba(0, 0, 0, .72);
+}
+.poker-house-broke-overlay.open {
+    display: flex;
+}
+.poker-user-notice-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    background: rgba(0, 0, 0, .74);
+}
+.poker-user-notice-overlay.open {
+    display: flex;
+}
+.poker-user-notice-popout {
+    width: min(560px, calc(100vw - 60px));
+    padding: 24px 26px 22px;
+    border: 1px solid #8a4a32;
+    border-radius: 9px;
+    background: linear-gradient(180deg, #1d1310, #0f0f0f);
+    box-shadow: 0 20px 80px rgba(0, 0, 0, .76);
+    color: #ddd;
+    text-align: center;
+}
+.poker-user-notice-popout strong {
+    display: block;
+    margin-bottom: 10px;
+    color: #ffad89;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+.poker-user-notice-message {
+    margin: 0 0 18px;
+    color: #f2f2f2;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+.poker-user-notice-close {
+    min-width: 110px;
+    padding: 8px 16px;
+    border: 1px solid #684040;
+    border-radius: 5px;
+    background: #3b2020;
+    color: #efaaaa;
+    font-weight: 800;
+    cursor: pointer;
+}
+.poker-user-notice-close:hover {
+    border-color: #8a4a32;
+    background: #4a2519;
+}
+.poker-house-broke-popout {
+    width: min(500px, calc(100vw - 60px));
+    padding: 24px 26px 22px;
+    border: 1px solid #9b742f;
+    border-radius: 9px;
+    background: linear-gradient(180deg, #1b1710, #0f0f0f);
+    box-shadow: 0 20px 80px rgba(0, 0, 0, .72);
+    color: #ddd;
+    text-align: center;
+}
+.poker-house-broke-popout strong {
+    display: block;
+    margin-bottom: 10px;
+    color: #d8a84e;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+.poker-house-broke-message {
+    margin: 0 0 18px;
+    color: #f2f2f2;
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.35;
+    text-shadow: 0 1px 2px #000;
+}
+.poker-house-broke-close {
+    min-width: 110px;
+    padding: 8px 16px;
+    border: 1px solid #4a4a4a;
+    border-radius: 5px;
+    background: #181818;
+    color: #ddd;
+    font-weight: 800;
+    cursor: pointer;
+}
+.poker-house-broke-close:hover {
+    border-color: #6a6a6a;
+    background: #202020;
+}
+.poker-spectator-popout {
+    width: min(380px, calc(100vw - 60px));
+    max-height: min(520px, calc(100vh - 60px));
+    overflow: hidden;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    background: #151515;
+    box-shadow: 0 18px 70px rgba(0, 0, 0, .65);
+    color: #ddd;
+}
+.poker-spectator-popout-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 15px;
+    border-bottom: 1px solid #303030;
+    background: #101010;
+}
+.poker-spectator-popout-head strong {
+    color: #fff;
+    font-size: 15px;
+}
+.poker-spectator-popout-head span {
+    color: #888;
+    font-size: 12px;
+}
+.poker-spectator-list {
+    max-height: 430px;
+    overflow-y: auto;
+    padding: 7px 0;
+}
+.poker-spectator-person,
+.poker-spectator-empty {
+    padding: 9px 15px;
+    border-bottom: 1px solid #242424;
+    color: #ddd;
+    font-size: 13px;
+}
+.poker-spectator-person:last-child {
+    border-bottom: 0;
+}
+.poker-spectator-empty {
+    border-bottom: 0;
+    color: #777;
+    text-align: center;
+}
+#modern-poker .spectator-mode {
+    color: #d9b96e;
+}
+#modern-poker .player-mode {
+    color: #8ed399;
+}
+#modern-poker .muted {
         color: #888;
         font-size: 11px;
         line-height: 1.4;
@@ -1385,42 +1376,26 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     /* ===== Poker visual polish - Stage 1 ===== */
     #modern-poker .table-wrap {
         border-radius: 16px;
-        box-shadow: 0 22px 45px rgba(0, 0, 0, .58), 0 0 0 1px rgba(255, 166, 55, .12);
+        box-shadow: 0 22px 45px rgba(0,0,0,.58), 0 0 0 1px rgba(255,166,55,.12);
     }
-
     #modern-poker .seat:not(.empty) {
-        width: 104px;
-        height: 96px;
-        padding: 5px 5px 4px;
-        overflow: visible;
-        background: linear-gradient(180deg, rgba(24, 24, 24, .97), rgba(5, 5, 5, .96));
-        border: 1px solid rgba(255, 255, 255, .22);
-        border-radius: 12px;
-        box-shadow: 0 7px 14px rgba(0, 0, 0, .72), inset 0 1px 0 rgba(255, 255, 255, .08);
-        z-index: 3;
-        transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, opacity .18s ease;
+        width:104px; height:96px; padding:5px 5px 4px; overflow:visible;
+        background:linear-gradient(180deg,rgba(24,24,24,.97),rgba(5,5,5,.96));
+        border:1px solid rgba(255,255,255,.22); border-radius:12px;
+        box-shadow:0 7px 14px rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.08);
+        z-index:3; transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease,opacity .18s ease;
     }
-
     #modern-poker .seat.turn {
-        outline: none;
-        border-color: #f2a23a;
-        background: linear-gradient(180deg, rgba(44, 31, 15, .98), rgba(10, 8, 5, .97));
-        box-shadow: 0 0 0 2px rgba(242, 162, 58, .22), 0 0 18px rgba(242, 162, 58, .48), 0 8px 16px rgba(0, 0, 0, .72);
-        transform: translateY(-2px);
+        outline:none; border-color:#f2a23a;
+        background:linear-gradient(180deg,rgba(44,31,15,.98),rgba(10,8,5,.97));
+        box-shadow:0 0 0 2px rgba(242,162,58,.22),0 0 18px rgba(242,162,58,.48),0 8px 16px rgba(0,0,0,.72);
+        transform:translateY(-2px);
     }
-
-    #modern-poker .avatar,
-    #modern-poker .avatar-fallback {
-        width: 44px;
-        height: 44px;
-        margin: 0 auto 2px;
-        border: 2px solid rgba(225, 184, 98, .72);
-        box-shadow: 0 2px 7px rgba(0, 0, 0, .75);
+    #modern-poker .avatar,#modern-poker .avatar-fallback {
+        width:44px;height:44px;margin:0 auto 2px;border:2px solid rgba(225,184,98,.72);
+        box-shadow:0 2px 7px rgba(0,0,0,.75);
     }
-
-    #modern-poker .avatar-fallback {
-        line-height: 40px;
-    }
+    #modern-poker .avatar-fallback { line-height:40px; }
 
     /* The Collector's emblem is his seat box -- no normal player HUD behind it. */
     #modern-poker .seat.collector-seat {
@@ -1433,14 +1408,12 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         box-shadow: none;
         overflow: visible;
     }
-
     #modern-poker .seat.collector-seat.turn {
         background: transparent;
         border: 0;
         box-shadow: none;
         transform: translateY(-2px);
     }
-
     #modern-poker .seat.collector-seat .avatar {
         width: 122px;
         height: 122px;
@@ -1450,14 +1423,12 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         border-radius: 0;
         background: transparent;
         box-shadow: none;
-        filter: drop-shadow(0 7px 9px rgba(0, 0, 0, .78));
+        filter: drop-shadow(0 7px 9px rgba(0,0,0,.78));
         transform: translateX(-15px);
     }
-
     #modern-poker .seat.collector-seat .username {
         display: none;
     }
-
     #modern-poker .seat.collector-seat .stack {
         position: absolute;
         left: 50%;
@@ -1465,204 +1436,127 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         transform: translateX(-50%);
         min-width: 74px;
         padding: 2px 7px;
-        border: 1px solid rgba(185, 52, 42, .72);
+        border: 1px solid rgba(185,52,42,.72);
         border-radius: 10px;
-        background: rgba(7, 7, 7, .9);
+        background: rgba(7,7,7,.9);
         color: #f0d1a5;
         text-align: center;
         white-space: nowrap;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, .7);
+        box-shadow: 0 3px 8px rgba(0,0,0,.7);
         transform: translateX(-55px);
     }
-
     #modern-poker .seat.collector-seat .seat-state {
         bottom: -34px;
     }
 
-    #modern-poker .username {
-        font-size: 11px;
-        line-height: 14px;
-        color: #f4f4f4;
-    }
-
-    #modern-poker .stack {
-        color: #8fe879;
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 14px;
-        text-shadow: 0 1px 2px #000;
-    }
-
+    #modern-poker .username { font-size:11px;line-height:14px;color:#f4f4f4; }
+    #modern-poker .stack { color:#8fe879;font-size:11px;font-weight:700;line-height:14px;text-shadow:0 1px 2px #000; }
     #modern-poker .seat-state {
-        position: absolute;
-        left: 50%;
-        bottom: -18px;
-        transform: translateX(-50%);
-        min-width: 64px;
-        padding: 2px 7px;
-        border-radius: 10px;
-        background: rgba(0, 0, 0, .82);
-        border: 1px solid rgba(255, 255, 255, .16);
-        color: #ffcc66;
-        font-size: 8px;
-        line-height: 12px;
-        white-space: nowrap;
+        position:absolute;left:50%;bottom:-18px;transform:translateX(-50%);
+        min-width:64px;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.82);
+        border:1px solid rgba(255,255,255,.16);color:#ffcc66;font-size:8px;line-height:12px;white-space:nowrap;
     }
-
-    #modern-poker .hole img,
-    #modern-poker .community img {
-        border-radius: 5px;
-        border: 1px solid rgba(255, 255, 255, .72);
-        box-shadow: 0 5px 10px rgba(0, 0, 0, .55);
+    #modern-poker .hole img,#modern-poker .community img {
+        border-radius:5px;border:1px solid rgba(255,255,255,.72);box-shadow:0 5px 10px rgba(0,0,0,.55);
     }
-
     #modern-poker .bet-chip {
-        min-width: 58px;
-        padding: 4px 8px 4px 23px;
-        border: 1px solid rgba(255, 180, 70, .48);
-        background: radial-gradient(circle at 12px 50%, #f2a23a 0 5px, #8c4c0d 6px 8px, transparent 9px),
-            linear-gradient(180deg, rgba(24, 24, 24, .94), rgba(3, 3, 3, .94));
-        border-radius: 13px;
-        box-shadow: 0 4px 9px rgba(0, 0, 0, .55);
-        font-weight: 700;
+        min-width:58px;padding:4px 8px 4px 23px;border:1px solid rgba(255,180,70,.48);
+        background:radial-gradient(circle at 12px 50%,#f2a23a 0 5px,#8c4c0d 6px 8px,transparent 9px),
+                   linear-gradient(180deg,rgba(24,24,24,.94),rgba(3,3,3,.94));
+        border-radius:13px;box-shadow:0 4px 9px rgba(0,0,0,.55);font-weight:700;
     }
-
-    #modern-poker .dealer-button,
-    #modern-poker .blind-button {
-        position: absolute;
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        font-weight: 800;
-        line-height: 22px;
-        text-align: center;
-        font-size: 10px;
-        pointer-events: none;
-        z-index: 6;
-        box-shadow: 0 3px 7px rgba(0, 0, 0, .72);
+    #modern-poker .dealer-button,#modern-poker .blind-button {
+        position:absolute;width:26px;height:26px;border-radius:50%;font-weight:800;line-height:22px;
+        text-align:center;font-size:10px;pointer-events:none;z-index:6;box-shadow:0 3px 7px rgba(0,0,0,.72);
     }
-
-    #modern-poker .dealer-button {
-        background: linear-gradient(#fff, #cfcfcf);
-        color: #111;
-        border: 2px solid #777;
-    }
-
-    #modern-poker .blind-button.sb {
-        background: linear-gradient(#bc55d7, #6e2186);
-        color: #fff;
-        border: 2px solid #e59bf5;
-    }
-
-    #modern-poker .blind-button.bb {
-        background: linear-gradient(#efb52f, #a76508);
-        color: #161008;
-        border: 2px solid #ffd86c;
-    }
-
+    #modern-poker .dealer-button { background:linear-gradient(#fff,#cfcfcf);color:#111;border:2px solid #777; }
+    #modern-poker .blind-button.sb { background:linear-gradient(#bc55d7,#6e2186);color:#fff;border:2px solid #e59bf5; }
+    #modern-poker .blind-button.bb { background:linear-gradient(#efb52f,#a76508);color:#161008;border:2px solid #ffd86c; }
     #modern-poker .winner-banner {
-        display: none;
-        width: 420px;
-        margin: 10px auto 0;
-        padding: 10px 16px;
-        border: 1px solid rgba(255, 177, 52, .72);
-        border-radius: 10px;
-        background: linear-gradient(180deg, rgba(45, 27, 8, .96), rgba(12, 8, 4, .96));
-        color: #ffbd55;
-        box-shadow: 0 0 22px rgba(255, 155, 25, .24), 0 8px 18px rgba(0, 0, 0, .55);
-        text-align: center;
-        font-size: 15px;
-        font-weight: 800;
-        pointer-events: none;
+        display:none;width:420px;margin:10px auto 0;padding:10px 16px;
+        border:1px solid rgba(255,177,52,.72);border-radius:10px;
+        background:linear-gradient(180deg,rgba(45,27,8,.96),rgba(12,8,4,.96));color:#ffbd55;
+        box-shadow:0 0 22px rgba(255,155,25,.24),0 8px 18px rgba(0,0,0,.55);
+        text-align:center;font-size:15px;font-weight:800;pointer-events:none;
     }
-
-    #modern-poker .winner-banner.show {
-        display: block;
-        animation: poker-result-in .2s ease-out;
-    }
+    #modern-poker .winner-banner.show { display:block;animation:poker-result-in .2s ease-out; }
 
     @keyframes poker-result-in {
-        from {
-            opacity: 0;
-            transform: translateY(-5px) scale(.98);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
+        from { opacity:0;transform:translateY(-5px) scale(.98); }
+        to { opacity:1;transform:translateY(0) scale(1); }
     }
 
 
-    #modern-poker .table-status-strip {
-        position: relative;
-    }
+#modern-poker .table-status-strip {
+    position: relative;
+}
 
-    #modern-poker .status-deal-control {
-        margin-left: auto;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-    }
+#modern-poker .status-deal-control {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
 
-    #modern-poker .status-deal-control #startHand {
-        margin: 0;
-        white-space: nowrap;
-    }
+#modern-poker .status-deal-control #startHand {
+    margin: 0;
+    white-space: nowrap;
+}
 
-    /* Primary play-area controls: make the buttons you actually play with stand out. */
-    #modern-poker .table-action-buttons .move,
-    #modern-poker .table-raise-controls .move,
-    #modern-poker #startHand {
-        border-color: #b77a20;
-        background: linear-gradient(180deg, #65451a, #3b280f);
-        color: #ffd98a;
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, .10),
-            0 0 0 1px rgba(218, 145, 34, .10),
-            0 0 10px rgba(218, 145, 34, .16);
-        text-shadow: 0 1px 1px #000;
-    }
+/* Primary play-area controls: make the buttons you actually play with stand out. */
+#modern-poker .table-action-buttons .move,
+#modern-poker .table-raise-controls .move,
+#modern-poker #startHand {
+    border-color: #b77a20;
+    background: linear-gradient(180deg, #65451a, #3b280f);
+    color: #ffd98a;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 0 0 1px rgba(218,145,34,.10),
+        0 0 10px rgba(218,145,34,.16);
+    text-shadow: 0 1px 1px #000;
+}
 
-    #modern-poker .table-action-buttons .move:hover:not(:disabled),
-    #modern-poker .table-raise-controls .move:hover:not(:disabled),
-    #modern-poker #startHand:hover:not(:disabled) {
-        border-color: #e2a43d;
-        background: linear-gradient(180deg, #805921, #4c3311);
-        color: #fff0bd;
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, .12),
-            0 0 13px rgba(226, 164, 61, .32);
-    }
+#modern-poker .table-action-buttons .move:hover:not(:disabled),
+#modern-poker .table-raise-controls .move:hover:not(:disabled),
+#modern-poker #startHand:hover:not(:disabled) {
+    border-color: #e2a43d;
+    background: linear-gradient(180deg, #805921, #4c3311);
+    color: #fff0bd;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 0 13px rgba(226,164,61,.32);
+}
 
-    #modern-poker .table-action-buttons .move:disabled,
-    #modern-poker .table-raise-controls .move:disabled,
-    #modern-poker #startHand:disabled {
-        border-color: #6b542f;
-        background: linear-gradient(180deg, #3b301e, #262015);
-        color: #a9946d;
-        box-shadow: none;
-        opacity: .55;
-    }
+#modern-poker .table-action-buttons .move:disabled,
+#modern-poker .table-raise-controls .move:disabled,
+#modern-poker #startHand:disabled {
+    border-color: #6b542f;
+    background: linear-gradient(180deg, #3b301e, #262015);
+    color: #a9946d;
+    box-shadow: none;
+    opacity: .55;
+}
 
-    /* Keep the raise entry itself visually tied to the play controls. */
-    #modern-poker .table-raise-controls input,
-    #modern-poker .table-raise-controls select {
-        border-color: #755522;
-    }
+/* Keep the raise entry itself visually tied to the play controls. */
+#modern-poker .table-raise-controls input,
+#modern-poker .table-raise-controls select {
+    border-color: #755522;
+}
 
-    #modern-poker .table-raise-controls input:focus,
-    #modern-poker .table-raise-controls select:focus {
-        border-color: #d89a34;
-        box-shadow: 0 0 0 2px rgba(216, 154, 52, .14);
-    }
+#modern-poker .table-raise-controls input:focus,
+#modern-poker .table-raise-controls select:focus {
+    border-color: #d89a34;
+    box-shadow: 0 0 0 2px rgba(216,154,52,.14);
+}
+
 </style>
 
 <div id="modern-poker" data-table-id="<?php echo (int) $tableId; ?>" data-csrf="<?php echo $csrf; ?>" data-user-id="<?php echo (int) $CURUSER['id']; ?>" data-can-moderate-chat="<?php echo ((int) $CURUSER['class'] >= 6 ? '1' : '0'); ?>">
     <div class="poker-layout">
         <div class="poker-play-column">
             <div class="table-wrap" id="pokerTable">
-                <div class="community" id="community"></div>
+            <div class="community" id="community"></div>
             </div>
 
             <div class="winner-banner" id="winnerBanner" role="status" aria-live="polite"></div>
@@ -1706,11 +1600,11 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 <span class="table-status-label">STATUS</span>
                 <strong class="table-status-value" id="statusValue">OK</strong>
                 <div class="notice" id="statusNotice"></div>
-
-                <div class="status-deal-control">
-                    <button type="button" class="good" id="startHand" disabled>Deal / Next Hand</button>
-                </div>
-            </div>
+            
+    <div class="status-deal-control">
+        <button type="button" class="good" id="startHand" disabled>Deal / Next Hand</button>
+    </div>
+</div>
         </div>
 
         <div>
@@ -1752,16 +1646,21 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     </button>
                 </div>
                 <div class="actions">
-                    <button type="button" class="good" id="adminStartTournament" hidden disabled>Start Tournament</button>
-
-                    <button type="button" id="sitOutToggle" disabled>Sit Out</button>
-                    <button type="button" class="danger" id="leaveTable" disabled>Leave Table</button>
-                    <button type="button" id="soundToggle" aria-pressed="true">Game Sounds: On</button>
-                    <button type="button" id="ambienceToggle" aria-pressed="true">Room Ambience: On</button>
-                    <a class="poker-link-button" href="poker-lobby.php">Poker Lobby</a>
-                    <a class="poker-link-button" href="poker-leaderboard.php">Leaderboard</a>
-                    <a class="poker-link-button" href="poker-profile.php">My Profile</a>
-                    <button type="button" class="history-open" id="historyOpen">Hand History</button>
+                    <div class="action-group action-gameplay">
+                        <button type="button" class="good action-wide" id="adminStartTournament" hidden disabled>Start Tournament</button>
+                        <button type="button" id="sitOutToggle" disabled>Sit Out</button>
+                        <button type="button" class="danger" id="leaveTable" disabled>Leave Table</button>
+                    </div>
+                    <div class="action-group action-audio">
+                        <button type="button" id="soundToggle" aria-pressed="true">Game Sounds: On</button>
+                        <button type="button" id="ambienceToggle" aria-pressed="true">Room Ambience: On</button>
+                    </div>
+                    <div class="action-group action-navigation">
+                        <a class="poker-link-button" href="poker-lobby.php">Poker Lobby</a>
+                        <button type="button" class="history-open" id="historyOpen">Hand History</button>
+                        <a class="poker-link-button" href="poker-leaderboard.php">Leaderboard</a>
+                        <a class="poker-link-button" href="poker-profile.php">My Profile</a>
+                    </div>
                 </div>
             </div>
 
@@ -1797,8 +1696,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 <div class="poker-house-broke-overlay" id="houseBrokeOverlay" aria-hidden="true">
     <div class="poker-house-broke-popout" role="dialog" aria-modal="true" aria-labelledby="houseBrokeTitle">
         <strong id="houseBrokeTitle">A Notice from The Collector</strong>
-        <p class="poker-house-broke-message">You are now poor. All of your upload are belong to us.</p>
-        <button type="button" class="poker-house-broke-close" id="houseBrokeClose">Close</button>
+        <p class="poker-house-broke-message">The Collector cleaned you out. Leave the table and buy back in to continue playing.</p>
+        <button type="button" class="poker-house-broke-close" id="houseBrokeClose">Leave Table</button>
     </div>
 </div>
 
@@ -2007,27 +1906,21 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             var oldStreet = String(previous.table.street || '').toLowerCase();
             var newStreet = String(state.table.street || '').toLowerCase();
             var isHouse = state.table.game_type === 'house';
-            var oldBoardCount = previous.table.community && previous.table.community.length ?
-                previous.table.community.length :
-                0;
-            var newBoardCount = state.table.community && state.table.community.length ?
-                state.table.community.length :
-                0;
+            var oldBoardCount = previous.table.community && previous.table.community.length
+                ? previous.table.community.length
+                : 0;
+            var newBoardCount = state.table.community && state.table.community.length
+                ? state.table.community.length
+                : 0;
             var houseBoardSound = false;
 
             if (isHouse && newBoardCount > oldBoardCount) {
                 houseBoardSound = true;
 
                 if (oldBoardCount === 0 && newBoardCount >= 5) {
-                    window.setTimeout(function() {
-                        playCardPlacement(3, 275);
-                    }, 250);
-                    window.setTimeout(function() {
-                        playCardPlacement(1, 325);
-                    }, 1450);
-                    window.setTimeout(function() {
-                        playCardPlacement(1, 325);
-                    }, 2100);
+                    window.setTimeout(function() { playCardPlacement(3, 275); }, 250);
+                    window.setTimeout(function() { playCardPlacement(1, 325); }, 1450);
+                    window.setTimeout(function() { playCardPlacement(1, 325); }, 2100);
                 } else {
                     window.setTimeout(function() {
                         playCardPlacement(newBoardCount - oldBoardCount, 275);
@@ -2217,35 +2110,23 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 if (!seat || !seat.user_id || seat.state === 'waiting' || seat.sitting_out) return;
                 numbers.push(seatNo);
             });
-            numbers.sort(function(a, b) {
-                return a - b;
-            });
+            numbers.sort(function(a,b){ return a-b; });
             return numbers;
         }
 
         function nextSeatNumber(numbers, current) {
             if (!numbers.length) return null;
-            for (var i = 0; i < numbers.length; i++)
-                if (numbers[i] > current) return numbers[i];
+            for (var i=0;i<numbers.length;i++) if (numbers[i] > current) return numbers[i];
             return numbers[0];
         }
 
         function blindSeatsForState(state) {
             var players = activeSeatNumbers(state);
-            var dealer = parseInt(state.table.dealer_seat || 0, 10);
-            if (!dealer || players.length < 2) return {
-                sb: null,
-                bb: null
-            };
-            if (players.length === 2) return {
-                sb: dealer,
-                bb: nextSeatNumber(players, dealer)
-            };
-            var sb = nextSeatNumber(players, dealer);
-            return {
-                sb: sb,
-                bb: nextSeatNumber(players, sb)
-            };
+            var dealer = parseInt(state.table.dealer_seat || 0,10);
+            if (!dealer || players.length < 2) return {sb:null,bb:null};
+            if (players.length === 2) return {sb:dealer,bb:nextSeatNumber(players,dealer)};
+            var sb = nextSeatNumber(players,dealer);
+            return {sb:sb,bb:nextSeatNumber(players,sb)};
         }
 
         function addBlindButton(kind, seatNo) {
@@ -2733,9 +2614,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                             if (!confirm('Delete this chat message from ' + message.username + '?')) return;
 
                             deleteButton.disabled = true;
-                            post('delete_chat_message', {
-                                message_id: message.id
-                            }).catch(function() {
+                            post('delete_chat_message', { message_id: message.id }).catch(function() {
                                 deleteButton.disabled = false;
                             });
                         });
@@ -2801,12 +2680,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             if (!data) {
                 el.classList.add('empty');
 
-                if (
-                    lastState &&
-                    lastState.table &&
-                    lastState.table.game_type === 'house' &&
-                    seatNo === 8
-                ) {
+                /* The wider empty-seat button needs separate alignment at seat 8. */
+                if (seatNo === 8) {
                     el.style.left = '338px';
                 }
 
@@ -2892,9 +2767,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             if (data.sitting_out) {
                 var sitout = document.createElement('div');
                 sitout.className = 'sitout-badge';
-                sitout.textContent = (data.state === 'active' || data.state === 'allin') ?
-                    'OUT NEXT HAND' :
-                    'SITTING OUT';
+                sitout.textContent = (data.state === 'active' || data.state === 'allin')
+                    ? 'OUT NEXT HAND'
+                    : 'SITTING OUT';
                 el.appendChild(sitout);
             }
 
@@ -2953,12 +2828,12 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 }
             }
 
-            var oldBoard = previous && previous.table && Array.isArray(previous.table.community) ?
-                previous.table.community.length :
-                0;
-            var newBoard = Array.isArray(state.table.community) ?
-                state.table.community.length :
-                0;
+            var oldBoard = previous && previous.table && Array.isArray(previous.table.community)
+                ? previous.table.community.length
+                : 0;
+            var newBoard = Array.isArray(state.table.community)
+                ? state.table.community.length
+                : 0;
 
             if (newBoard > oldBoard) {
                 var start = now + 250;
@@ -3139,9 +3014,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     input.max = maxBytes > 0 ? String(maxBytes) : '';
                     if (shouldReset) input.value = '';
 
-                    limit.textContent = maxBytes > currentBet ?
-                        'No full raise available — use All In.' :
-                        'No raise available.';
+                    limit.textContent = maxBytes > currentBet
+                        ? 'No full raise available — use All In.'
+                        : 'No raise available.';
                 }
 
                 if (raiseButton) {
@@ -3157,9 +3032,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 input.max = '';
                 if (shouldReset) input.value = '';
 
-                limit.textContent = maxBytes > currentBet ?
-                    'No full raise available — use All In.' :
-                    'No raise available.';
+                limit.textContent = maxBytes > currentBet
+                    ? 'No full raise available — use All In.'
+                    : 'No raise available.';
 
                 if (raiseButton) {
                     raiseButton.disabled = true;
@@ -3184,9 +3059,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
              * 4 MB) becomes 0.0039 GB and the spinner starts there. The actual
              * poker minimum is still shown below and enforced by the server.
              */
-            input.min = unit === 'MB' ?
-                trimBuyinNumber(minRaiseTo / divisor, decimals) :
-                '0';
+            input.min = unit === 'MB'
+                ? trimBuyinNumber(minRaiseTo / divisor, decimals)
+                : '0';
             input.max = trimBuyinNumber(maxBytes / divisor, decimals);
 
             if (shouldReset) {
@@ -3208,14 +3083,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             }
             selectedSeat = seatNo;
             if (lastState && lastState.table && lastState.table.game_type === 'tournament') {
-                if (lastState.table.tournament_status !== 'registration') {
-                    alert('Tournament registration is closed.');
-                    return;
-                }
+                if (lastState.table.tournament_status !== 'registration') { alert('Tournament registration is closed.'); return; }
                 if (!confirm('Register for ' + lastState.table.tournament_entry_fee_text + ' and receive ' + lastState.table.tournament_starting_stack_text + '?')) return;
-                post('join', {
-                    seat: selectedSeat
-                });
+                post('join', { seat: selectedSeat });
                 return;
             }
             document.getElementById('selectedSeat').textContent = '#' + seatNo;
@@ -3333,9 +3203,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 state.table.status === 'showdown' &&
                 houseOutcomeRevealAt > Date.now()
             ) {
-                tableMessage = state.table.community && state.table.community.length ?
-                    'Dealing the board...' :
-                    'The Collector is settling the hand...';
+                tableMessage = state.table.community && state.table.community.length
+                    ? 'Dealing the board...'
+                    : 'The Collector is settling the hand...';
             }
 
             var playersNeeded = isHouse ? 1 : 2;
@@ -3366,9 +3236,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             var tableStatusPanel = document.getElementById('tableStatusPanel');
             var isWaitingForPlayers = !isHouse && seatedPlayers < playersNeeded && tableMessage === 'Waiting for players.';
             tableStatusPanel.classList.toggle('waiting', isWaitingForPlayers);
-            document.getElementById('buyinLimits').textContent = state.table.game_type === 'tournament' ?
-                ('Tournament: ' + state.table.tournament_entry_fee_text + ' entry · ' + state.table.tournament_starting_stack_text + ' starting stack · Prize ' + state.table.tournament_prize_pool_text) :
-                (isHouse ? ('The Collector · Buy-in: ' + state.table.min_buyin_text + ' to ' + state.table.max_buyin_text) : ('Buy-in: ' + state.table.min_buyin_text + ' to ' + state.table.max_buyin_text));
+            document.getElementById('buyinLimits').textContent = state.table.game_type === 'tournament'
+                ? ('Tournament: ' + state.table.tournament_entry_fee_text + ' entry · ' + state.table.tournament_starting_stack_text + ' starting stack · Prize ' + state.table.tournament_prize_pool_text)
+                : (isHouse ? ('The Collector · Buy-in: ' + state.table.min_buyin_text + ' to ' + state.table.max_buyin_text) : ('Buy-in: ' + state.table.min_buyin_text + ' to ' + state.table.max_buyin_text));
 
             var me = state.me.seat ? state.seats[state.me.seat] : null;
 
@@ -3413,9 +3283,9 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             var spectators = state.spectators || [];
             var spectatorCount = state.spectator_count || spectators.length || 0;
             document.getElementById('spectatorCount').textContent = String(spectatorCount);
-            document.getElementById('spectatorPopoutCount').textContent = spectatorCount === 1 ?
-                '1 watching' :
-                String(spectatorCount) + ' watching';
+            document.getElementById('spectatorPopoutCount').textContent = spectatorCount === 1
+                ? '1 watching'
+                : String(spectatorCount) + ' watching';
 
             var spectatorList = document.getElementById('spectatorList');
             spectatorList.textContent = '';
@@ -3456,7 +3326,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     String(state.table.max_seats || 10) + ')';
             }
 
-            document.getElementById('startHand').disabled = !state.me.seat ||
+            document.getElementById('startHand').disabled =
+                !state.me.seat ||
                 state.me.sitting_out ||
                 state.table.status === 'playing' ||
                 (isTournament && state.table.tournament_status !== 'running') ||
@@ -3504,16 +3375,16 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 document.getElementById('turnNotice').textContent = 'Waiting for ' + currentTurnSeat.username + ' to reconnect...';
             } else {
                 if (!state.me.seat) {
-                    document.getElementById('turnNotice').textContent = state.table.status === 'playing' ?
-                        'Spectating — watch the hand or take an open seat.' :
-                        'Spectating — take an open seat when you are ready to play.';
+                    document.getElementById('turnNotice').textContent = state.table.status === 'playing'
+                        ? 'Spectating — watch the hand or take an open seat.'
+                        : 'Spectating — take an open seat when you are ready to play.';
                 } else {
                     if (waitingForNextHand) {
                         document.getElementById('turnNotice').textContent = 'Seat reserved — you will be dealt in when the next hand starts.';
                     } else {
-                        document.getElementById('turnNotice').textContent = isHouse ?
-                            (state.table.status === 'playing' ? 'The Collector is thinking...' : 'Ready for the next hand against The Collector.') :
-                            (state.table.status === 'playing' ? 'Waiting for another player...' : 'No hand in progress.');
+                        document.getElementById('turnNotice').textContent = isHouse
+                            ? (state.table.status === 'playing' ? 'The Collector is thinking...' : 'Ready for the next hand against The Collector.')
+                            : (state.table.status === 'playing' ? 'Waiting for another player...' : 'No hand in progress.');
                     }
                 }
                 callBtn.textContent = 'Call';
@@ -3581,20 +3452,22 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         });
 
         document.getElementById('houseBrokeClose').addEventListener('click', function() {
-            closeHouseBrokePopup();
-        });
+            var button = this;
+            button.disabled = true;
+            button.textContent = 'Leaving...';
 
-        document.getElementById('houseBrokeOverlay').addEventListener('click', function(event) {
-            if (event.target === this) {
-                closeHouseBrokePopup();
-            }
+            post('leave', {}).then(function() {
+                window.location.href = 'poker-lobby.php';
+            }).catch(function() {
+                button.disabled = false;
+                button.textContent = 'Leave Table';
+            });
         });
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeHistory();
                 closeSpectators();
-                closeHouseBrokePopup();
                 closeUserNotice();
             }
         });
@@ -3710,12 +3583,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
          */
         if (ambienceEnabled) {
             startAmbience();
-            document.addEventListener('pointerdown', startAmbienceFromInteraction, {
-                once: true
-            });
-            document.addEventListener('keydown', startAmbienceFromInteraction, {
-                once: true
-            });
+            document.addEventListener('pointerdown', startAmbienceFromInteraction, { once: true });
+            document.addEventListener('keydown', startAmbienceFromInteraction, { once: true });
         }
         var raiseUnitSelect = document.getElementById('raiseToUnit');
         raiseUnitSelect.dataset.previousUnit = raiseUnitSelect.value;
