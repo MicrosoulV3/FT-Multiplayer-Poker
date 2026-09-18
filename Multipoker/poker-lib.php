@@ -3607,8 +3607,11 @@ function poker_house_hand_phrase($score)
 {
     $hand = strtolower(poker_hand_name($score));
 
+    if ($hand === 'high card') {
+        return 'the high card';
+    }
+
     $withoutArticle = array(
-        'high card',
         'two pair',
         'three of a kind',
         'four of a kind'
