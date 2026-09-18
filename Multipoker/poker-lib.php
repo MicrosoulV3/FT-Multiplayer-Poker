@@ -1609,7 +1609,7 @@ function poker_leave($db, $tableId, $userId)
         poker_dealer_message(
             $db,
             $tableId,
-            $isTournament ? ($leavingUsername . ' leaves the tournament table.') : ($leavingUsername . ' leaves the table with ' . poker_format_bytes($stack) . '.')
+            $isTournament ? ($leavingUsername . ' left.') : ($leavingUsername . ' left with ' . poker_format_bytes($stack) . '.')
         );
 
         $emptyDeck = json_encode(array());
