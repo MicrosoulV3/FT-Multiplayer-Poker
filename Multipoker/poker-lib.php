@@ -3612,11 +3612,11 @@ function poker_house_showdown_session(&$state)
     $bScore = poker_best_score(array_merge(array($state['bot']['hole1'],$state['bot']['hole2']), $state['community']));
     $cmp = poker_compare_score($pScore, $bScore);
     if ($cmp > 0) {
-        poker_house_finish_session_hand($state, 'player', 'You win with ' . poker_hand_name($pScore) . '.');
+        poker_house_finish_session_hand($state, 'player', 'You win with a ' . poker_hand_name($pScore) . '.');
     } elseif ($cmp < 0) {
-        poker_house_finish_session_hand($state, 'bot', 'The Collector wins with ' . poker_hand_name($bScore) . '.');
+        poker_house_finish_session_hand($state, 'bot', 'The Collector wins with a ' . poker_hand_name($bScore) . '.');
     } else {
-        poker_house_finish_session_hand($state, 'split', 'Split pot — both hands tie with ' . poker_hand_name($pScore) . '.');
+        poker_house_finish_session_hand($state, 'split', 'Split pot — both hands tie with a ' . poker_hand_name($pScore) . '.');
     }
 }
 
