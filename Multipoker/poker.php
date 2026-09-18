@@ -1243,17 +1243,11 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 }
 
 .poker-house-broke-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 10040;
     display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 30px;
-    background: rgba(0, 0, 0, .72);
+    margin: -2px 0 12px;
 }
 .poker-house-broke-overlay.open {
-    display: flex;
+    display: block;
 }
 .poker-user-notice-overlay {
     position: fixed;
@@ -1310,12 +1304,12 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     background: #4a2519;
 }
 .poker-house-broke-popout {
-    width: min(500px, calc(100vw - 60px));
-    padding: 24px 26px 22px;
+    width: auto;
+    padding: 14px;
     border: 1px solid #9b742f;
-    border-radius: 9px;
+    border-radius: 6px;
     background: linear-gradient(180deg, #1b1710, #0f0f0f);
-    box-shadow: 0 20px 80px rgba(0, 0, 0, .72);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, .35);
     color: #ddd;
     text-align: center;
 }
@@ -1329,11 +1323,11 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
     text-transform: uppercase;
 }
 .poker-house-broke-message {
-    margin: 0 0 18px;
+    margin: 0 0 12px;
     color: #f2f2f2;
-    font-size: 21px;
-    font-weight: 800;
-    line-height: 1.35;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
     text-shadow: 0 1px 2px #000;
 }
 .poker-house-broke-close {
@@ -1699,6 +1693,14 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 </div>
             </div>
 
+            <div class="poker-house-broke-overlay" id="houseBrokeOverlay" aria-hidden="true">
+                <div class="poker-house-broke-popout" role="status" aria-labelledby="houseBrokeTitle">
+                    <strong id="houseBrokeTitle">A Notice from The Collector</strong>
+                    <p class="poker-house-broke-message">The Collector cleaned you out. Leave the table and buy back in to continue playing.</p>
+                    <button type="button" class="poker-house-broke-close" id="houseBrokeClose">Leave Table</button>
+                </div>
+            </div>
+
             <a class="poker-lobby-return" id="pokerLobbyReturn" href="poker-lobby.php" hidden>&#8592; Return to Poker Lobby</a>
 
             <div class="panel buyin-box" id="buyinBox">
@@ -1727,14 +1729,6 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         <strong id="userNoticeTitle">Poker Notice</strong>
         <p class="poker-user-notice-message" id="userNoticeMessage"></p>
         <button type="button" class="poker-user-notice-close" id="userNoticeClose">Close</button>
-    </div>
-</div>
-
-<div class="poker-house-broke-overlay" id="houseBrokeOverlay" aria-hidden="true">
-    <div class="poker-house-broke-popout" role="dialog" aria-modal="true" aria-labelledby="houseBrokeTitle">
-        <strong id="houseBrokeTitle">A Notice from The Collector</strong>
-        <p class="poker-house-broke-message">The Collector cleaned you out. Leave the table and buy back in to continue playing.</p>
-        <button type="button" class="poker-house-broke-close" id="houseBrokeClose">Leave Table</button>
     </div>
 </div>
 
@@ -3374,14 +3368,16 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
             var sidebarLocked = !!(
                 state.me.seat &&
-                (state.table.status === 'playing' || state.table.status === 'showdown')
+                state.table.status === 'playing'
             );
 
-            document.querySelectorAll('#modern-poker .action-gameplay button, #modern-poker .action-navigation button').forEach(function(button) {
+            document.querySelectorAll('#modern-poker .action-gameplay button').forEach(function(button) {
                 if (sidebarLocked) {
                     button.disabled = true;
                 }
             });
+
+            document.getElementById('historyOpen').disabled = sidebarLocked;
 
             document.querySelectorAll('#modern-poker .action-navigation a').forEach(function(link) {
                 link.classList.toggle('gameplay-disabled', sidebarLocked);
