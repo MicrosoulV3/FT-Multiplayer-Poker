@@ -1,6 +1,5 @@
 -- FastTracker Poker - 9-11-2026
---
--- IMPORTANT:
+
 --   * Run this SQL manually.
 --   * This is intended for a NEW poker installation, not as an upgrade script.
 
