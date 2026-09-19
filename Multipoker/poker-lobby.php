@@ -919,7 +919,7 @@ if (function_exists('begin_frame')) {
         document.getElementById('houseCount').textContent = houseTables.length + (houseTables.length === 1 ? ' Game' : ' Games');
 
         if (!cashTables.length) {
-            appendEmptyRow(cashBody, 8, 'No multiplayer cash games are configured.');
+            appendEmptyRow(cashBody, 8, 'No multiplayer games are configured.');
         } else {
             cashTables.forEach(function(table) {
                 renderCashTable(cashBody, table, draining);
