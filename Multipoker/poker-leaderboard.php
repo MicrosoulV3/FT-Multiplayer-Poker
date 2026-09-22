@@ -1,7 +1,7 @@
 <?php
 /*
  * FastTracker Poker - Player Statistics / Leaderboard
- */ 
+ */
 
 require_once("backend/functions.php");
 
@@ -64,7 +64,7 @@ if (function_exists('stdhead')) {
 
 function poker_leaderboard_table($rows, $valueField, $valueLabel)
 {
-    ?>
+?>
     <table class="leader-table">
         <thead>
             <tr>
@@ -77,39 +77,39 @@ function poker_leaderboard_table($rows, $valueField, $valueLabel)
             </tr>
         </thead>
         <tbody>
-        <?php if (!$rows) { ?>
-            <tr>
-                <td colspan="6" class="empty-board">No poker statistics yet.</td>
-            </tr>
-        <?php } else { ?>
-            <?php foreach ($rows as $index => $row) { ?>
-                <?php
-                if ($valueField === 'net_profit') {
-                    $value = poker_format_signed_bytes((int) $row[$valueField]);
-                    $valueClass = ((int) $row[$valueField] > 0)
-                        ? 'positive'
-                        : (((int) $row[$valueField] < 0) ? 'negative' : '');
-                } elseif ($valueField === 'biggest_pot') {
-                    $value = poker_format_bytes((int) $row[$valueField]);
-                    $valueClass = '';
-                } else {
-                    $value = number_format((int) $row[$valueField]);
-                    $valueClass = '';
-                }
-                ?>
+            <?php if (!$rows) { ?>
                 <tr>
-                    <td class="rank"><?php echo $index + 1; ?></td>
-                    <td class="player"><a href="poker-profile.php?user_id=<?php echo (int) $row['user_id']; ?>"><?php echo htmlspecialchars($row['username'], ENT_QUOTES, 'UTF-8'); ?></a></td>
-                    <td class="value <?php echo $valueClass; ?>"><?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo number_format((int) $row['hands_played']); ?></td>
-                    <td><?php echo number_format((int) $row['hands_won']); ?></td>
-                    <td><?php echo poker_stats_win_rate($row['hands_won'], $row['hands_played']); ?></td>
+                    <td colspan="6" class="empty-board">No poker statistics yet.</td>
                 </tr>
+            <?php } else { ?>
+                <?php foreach ($rows as $index => $row) { ?>
+                    <?php
+                    if ($valueField === 'net_profit') {
+                        $value = poker_format_signed_bytes((int) $row[$valueField]);
+                        $valueClass = ((int) $row[$valueField] > 0)
+                            ? 'positive'
+                            : (((int) $row[$valueField] < 0) ? 'negative' : '');
+                    } elseif ($valueField === 'biggest_pot') {
+                        $value = poker_format_bytes((int) $row[$valueField]);
+                        $valueClass = '';
+                    } else {
+                        $value = number_format((int) $row[$valueField]);
+                        $valueClass = '';
+                    }
+                    ?>
+                    <tr>
+                        <td class="rank"><?php echo $index + 1; ?></td>
+                        <td class="player"><a href="poker-profile.php?user_id=<?php echo (int) $row['user_id']; ?>"><?php echo htmlspecialchars($row['username'], ENT_QUOTES, 'UTF-8'); ?></a></td>
+                        <td class="value <?php echo $valueClass; ?>"><?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo number_format((int) $row['hands_played']); ?></td>
+                        <td><?php echo number_format((int) $row['hands_won']); ?></td>
+                        <td><?php echo poker_stats_win_rate($row['hands_won'], $row['hands_played']); ?></td>
+                    </tr>
+                <?php } ?>
             <?php } ?>
-        <?php } ?>
         </tbody>
     </table>
-    <?php
+<?php
 }
 ?>
 
@@ -303,7 +303,6 @@ function poker_leaderboard_table($rows, $valueField, $valueLabel)
         color: #777 !important;
         text-align: center;
     }
-
 </style>
 
 <div id="poker-leaderboard">
