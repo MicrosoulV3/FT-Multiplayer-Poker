@@ -801,6 +801,36 @@ if (function_exists('begin_frame')) {
         box-shadow: 0 0 0 1px rgba(138, 70, 70, .28);
     }
 
+    #poker-admin .blind-rule-note {
+        margin-top: 10px;
+        padding: 8px 10px;
+        border: 1px solid #315437;
+        border-radius: 3px;
+        background: #182b1b;
+        color: #a9e0af;
+        font-size: 11px;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    #poker-admin .blind-rule-note.error {
+        border-color: #b34d4d;
+        background: #321919;
+        color: #f0a5a5;
+    }
+
+    #poker-admin .blind-rule-note.pending {
+        border-color: #775c2d;
+        background: #2a2112;
+        color: #d9b875;
+    }
+
+    #poker-admin .buyin-editor.blind-rule-field input,
+    #poker-admin .buyin-editor.blind-rule-field select {
+        border-color: #b34d4d;
+        box-shadow: 0 0 0 1px rgba(179, 77, 77, .3);
+    }
+
     #poker-admin .admin-card {
         margin-bottom: 14px;
         padding: 15px;
@@ -1336,7 +1366,7 @@ if (function_exists('begin_frame')) {
                     </div>
                 </div>
                 <div>
-                    <label for="new_sb">Start SB</label>
+                    <label for="new_sb">Starting Small Blind</label>
                     <div class="buyin-editor">
                         <input id="new_sb" type="number" name="starting_small_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-table', 'starting_small_blind_amount', '100'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required>
                         <select name="starting_small_blind_unit" aria-label="Starting small blind unit">
@@ -1346,7 +1376,7 @@ if (function_exists('begin_frame')) {
                     </div>
                 </div>
                 <div>
-                    <label for="new_bb">Start BB</label>
+                    <label for="new_bb">Starting Big Blind</label>
                     <div class="buyin-editor">
                         <input id="new_bb" type="number" name="starting_big_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-table', 'starting_big_blind_amount', '200'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required>
                         <select name="starting_big_blind_unit" aria-label="Starting big blind unit">
@@ -1356,7 +1386,7 @@ if (function_exists('begin_frame')) {
                     </div>
                 </div>
                 <div>
-                    <label for="new_interval">Raise Every</label>
+                    <label for="new_interval">Increase Blinds Every (Hands)</label>
                     <input id="new_interval" type="number" name="blind_hands_per_level" min="1" max="100" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-table', 'blind_hands_per_level', '5'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required>
                 </div>
                 <div>
@@ -1372,7 +1402,8 @@ if (function_exists('begin_frame')) {
                 </div>
             </div>
         </form>
-        <div class="small-note">Starting blinds and the escalation interval are stored per table. The familiar blind curve scales upward from the starting values you choose.</div>
+        <div class="blind-rule-note">&#10003; Buy-In / Big Blind: OK</div>
+        <div class="small-note">Small and big blinds are forced starting bets. Both increase after the selected number of completed hands.</div>
     </div>
 
     <div id="create-house" class="admin-card<?php echo $formTarget === 'create-house' && $formError !== '' ? ' form-error-target' : ''; ?>">
@@ -1386,13 +1417,14 @@ if (function_exists('begin_frame')) {
                 <div><label>House Table Name</label><input class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Play the House" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'name'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
                 <div><label>Min Buy-In</label><div class="buyin-editor"><input type="number" name="min_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'min_buyin_amount', '5'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="min_buyin_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'min_buyin_unit', 'MB', 'GB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'min_buyin_unit', 'GB', 'GB'); ?>>GB</option></select></div></div>
                 <div><label>Max Buy-In</label><div class="buyin-editor"><input type="number" name="max_buyin_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'max_buyin_amount', '20'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="max_buyin_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'max_buyin_unit', 'MB', 'GB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'max_buyin_unit', 'GB', 'GB'); ?>>GB</option></select></div></div>
-                <div><label>Start SB</label><div class="buyin-editor"><input type="number" name="starting_small_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'starting_small_blind_amount', '100'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="starting_small_blind_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'starting_small_blind_unit', 'MB', 'MB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'starting_small_blind_unit', 'GB', 'MB'); ?>>GB</option></select></div></div>
-                <div><label>Start BB</label><div class="buyin-editor"><input type="number" name="starting_big_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'starting_big_blind_amount', '200'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="starting_big_blind_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'starting_big_blind_unit', 'MB', 'MB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'starting_big_blind_unit', 'GB', 'MB'); ?>>GB</option></select></div></div>
-                <div><label>Blinds</label><input type="hidden" name="blind_hands_per_level" value="1"><div class="create-info">Fixed — No Increases</div></div>
+                <div><label>Starting Small Blind</label><div class="buyin-editor"><input type="number" name="starting_small_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'starting_small_blind_amount', '100'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="starting_small_blind_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'starting_small_blind_unit', 'MB', 'MB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'starting_small_blind_unit', 'GB', 'MB'); ?>>GB</option></select></div></div>
+                <div><label>Starting Big Blind</label><div class="buyin-editor"><input type="number" name="starting_big_blind_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-house', 'starting_big_blind_amount', '200'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="starting_big_blind_unit"><option value="MB"<?php echo poker_admin_selected('create-house', 'starting_big_blind_unit', 'MB', 'MB'); ?>>MB</option><option value="GB"<?php echo poker_admin_selected('create-house', 'starting_big_blind_unit', 'GB', 'MB'); ?>>GB</option></select></div></div>
+                <div><label>Blind Increases</label><input type="hidden" name="blind_hands_per_level" value="1"><div class="create-info">Fixed — Never</div></div>
                 <div><label>Game</label><div class="create-info">1 Player vs The Collector</div></div>
                 <div><button class="save-button" type="submit">Create House Table</button></div>
             </div>
         </form>
+        <div class="blind-rule-note">&#10003; Buy-In / Big Blind: OK</div>
         <div class="small-note">Heads-up Hold'em against a server-controlled opponent known as The Collector. House blinds stay fixed, and the bot starts each hand with the same amount the player originally bought in for. The House never reads the player's hidden cards.</div>
     </div>
 
@@ -1406,9 +1438,9 @@ if (function_exists('begin_frame')) {
                 <div><label>Tournament Name</label><input class="clear-placeholder-on-focus" type="text" name="name" maxlength="64" placeholder="Friday Night Tournament" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'name'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
                 <div><label>Entry Fee</label><div class="buyin-editor"><input type="number" name="entry_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'entry_amount', '1'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="entry_unit"><option<?php echo poker_admin_selected('create-tournament', 'entry_unit', 'MB', 'GB'); ?>>MB</option><option<?php echo poker_admin_selected('create-tournament', 'entry_unit', 'GB', 'GB'); ?>>GB</option></select></div></div>
                 <div><label>Starting Chips</label><input type="number" name="starting_chips" min="100" step="100" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'starting_chips', '10000'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
-                <div><label>Start SB (chips)</label><input type="number" name="tournament_sb" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'tournament_sb', '50'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
-                <div><label>Start BB (chips)</label><input type="number" name="tournament_bb" min="2" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'tournament_bb', '100'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
-                <div><label>Raise Every</label><input type="number" name="blind_hands_per_level" min="1" max="100" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'blind_hands_per_level', '5'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
+                <div><label>Starting Small Blind (Chips)</label><input type="number" name="tournament_sb" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'tournament_sb', '50'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
+                <div><label>Starting Big Blind (Chips)</label><input type="number" name="tournament_bb" min="2" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'tournament_bb', '100'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
+                <div><label>Increase Blinds Every (Hands)</label><input type="number" name="blind_hands_per_level" min="1" max="100" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'blind_hands_per_level', '5'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
                 <div><label>Seats</label><select name="max_seats"><?php for($i=2;$i<=10;$i++){ ?><option value="<?php echo $i; ?>"<?php echo poker_admin_selected('create-tournament', 'max_seats', $i, '10'); ?>><?php echo $i; ?></option><?php } ?></select></div>
                 <div><button class="save-button" type="submit">Create Tournament</button></div>
             </div>
@@ -1491,7 +1523,7 @@ if (function_exists('begin_frame')) {
 
                                 <?php if (!$isHouse) { ?>
                                 <div>
-                                    <label>Raise Every</label>
+                                    <label>Increase Blinds Every (Hands)</label>
                                     <input class="number-input" type="number" name="blind_hands_per_level" min="1" max="100" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'blind_hands_per_level', $table['blind_hands_per_level']), ENT_QUOTES, 'UTF-8'); ?>" required>
                                 </div>
 
@@ -1564,6 +1596,7 @@ if (function_exists('begin_frame')) {
                             </div>
                         </div>
                     </div>
+                    <div class="blind-rule-note">&#10003; Buy-In / Big Blind: OK</div>
                     <?php if ($isHouse) { ?>
                     <div class="house-info-subtext">
                         Heads-up Hold'em against a server-controlled opponent known as The Collector. Blinds stay fixed (no increases). The House starts each hand with the same amount the player originally bought in for.
@@ -1661,6 +1694,58 @@ if (function_exists('begin_frame')) {
 </div>
 
 <script>
+function pokerAdminAmountInMb(form, amountName, unitName) {
+    var amount = form.querySelector('[name="' + amountName + '"]');
+    var unit = form.querySelector('[name="' + unitName + '"]');
+    if (!amount || !unit || amount.value === '') return null;
+    return parseFloat(amount.value) * (unit.value === 'GB' ? 1024 : 1);
+}
+
+function pokerAdminValidateBlindRule(form, focusField) {
+    var minimum = pokerAdminAmountInMb(form, 'min_buyin_amount', 'min_buyin_unit');
+    var bigBlind = pokerAdminAmountInMb(form, 'starting_big_blind_amount', 'starting_big_blind_unit');
+    var note = form.parentElement.querySelector('.blind-rule-note');
+    var fields = form.querySelectorAll('[name="min_buyin_amount"], [name="starting_big_blind_amount"]');
+
+    fields.forEach(function (field) {
+        var editor = field.closest('.buyin-editor');
+        if (editor) editor.classList.remove('blind-rule-field');
+    });
+    if (note) {
+        note.classList.remove('error');
+        note.classList.remove('pending');
+        note.textContent = '\u2713 Buy-In / Big Blind: OK';
+    }
+
+    if (minimum === null || bigBlind === null) {
+        if (note) {
+            note.classList.add('pending');
+            note.textContent = 'Enter both values to check this rule.';
+        }
+        return true;
+    }
+
+    if (minimum >= bigBlind) return true;
+
+    fields.forEach(function (field) {
+        var editor = field.closest('.buyin-editor');
+        if (editor) editor.classList.add('blind-rule-field');
+    });
+    if (note) {
+        note.classList.add('error');
+        note.textContent = 'Minimum buy-in must be equal to or greater than the starting big blind.';
+    }
+
+    if (focusField) {
+        var minimumField = form.querySelector('[name="min_buyin_amount"]');
+        if (minimumField) {
+            minimumField.focus();
+            minimumField.select();
+        }
+    }
+    return false;
+}
+
 document.querySelectorAll('#poker-admin form').forEach(function (form) {
     form.addEventListener('focusin', function (event) {
         var field = event.target;
@@ -1669,7 +1754,12 @@ document.querySelectorAll('#poker-admin form').forEach(function (form) {
         }
     });
 
-    form.addEventListener('submit', function () {
+    form.addEventListener('submit', function (event) {
+        if (!pokerAdminValidateBlindRule(form, true)) {
+            event.preventDefault();
+            return;
+        }
+
         var hidden = form.querySelector('input[name="_focus_field"]');
         if (!hidden) {
             hidden = document.createElement('input');
@@ -1678,6 +1768,14 @@ document.querySelectorAll('#poker-admin form').forEach(function (form) {
             form.appendChild(hidden);
         }
         hidden.value = form.dataset.lastFocusField || '';
+    });
+
+    form.addEventListener('input', function () {
+        pokerAdminValidateBlindRule(form, false);
+    });
+
+    form.addEventListener('change', function () {
+        pokerAdminValidateBlindRule(form, false);
     });
 });
 
@@ -1702,6 +1800,12 @@ document.querySelectorAll('#poker-admin input.clear-placeholder-on-focus[placeho
     target.scrollIntoView({ behavior: 'auto', block: 'center' });
 
     var focusName = <?php echo json_encode($focusField); ?>;
+    var blindRuleError = <?php echo json_encode($formError === 'Minimum buy-in cannot be lower than the starting big blind.'); ?>;
+    if (blindRuleError) {
+        var form = target.querySelector('form');
+        if (form) pokerAdminValidateBlindRule(form, false);
+        focusName = 'min_buyin_amount';
+    }
     var field = null;
     if (focusName) {
         target.querySelectorAll('input, select, textarea, button').forEach(function (candidate) {
