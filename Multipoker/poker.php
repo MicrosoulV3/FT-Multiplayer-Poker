@@ -1716,6 +1716,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     <div class="info-row"><span>Tournament</span><strong id="tournamentStatus">-</strong></div>
                     <div class="info-row"><span>Registered</span><strong id="tournamentRegistered">-</strong></div>
                     <div class="info-row"><span>Prize Pool</span><strong id="tournamentPrize">-</strong></div>
+                    <div class="info-row"><span>Champion's Vault</span><strong id="tournamentVault">-</strong></div>
                 </div>
                 <div class="info-row"><span>Mode</span><strong id="viewMode" class="spectator-mode"><span id="viewModeText">Spectating</span><img class="collector-mode-emblem" id="collectorModeEmblem" src="images/poker/collector-mode-emblem.webp" alt="The Collector" title="The Collector" hidden></strong></div>
                 <div class="info-row"><span>Your seat</span><strong id="mySeat">Not seated</strong></div>
@@ -3416,6 +3417,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 document.getElementById('tournamentRegistered').textContent =
                     String(state.table.tournament_entries || 0) + ' / ' + String(state.table.max_seats || 10);
                 document.getElementById('tournamentPrize').textContent = state.table.tournament_prize_pool_text;
+                document.getElementById('tournamentVault').textContent = state.table.tournament_vault_reward_text || state.table.tournament_vault_range_text;
             }
 
             var seatedPlayers = 0;
@@ -3477,7 +3479,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             var isWaitingForPlayers = !isHouse && seatedPlayers < playersNeeded && tableMessage === 'Waiting for players.';
             tableStatusPanel.classList.toggle('waiting', isWaitingForPlayers);
             document.getElementById('buyinLimits').textContent = state.table.game_type === 'tournament'
-                ? ('Tournament: ' + state.table.tournament_entry_fee_text + ' entry · ' + state.table.tournament_starting_stack_text + ' starting stack · Prize ' + state.table.tournament_prize_pool_text)
+                ? ('Tournament: ' + state.table.tournament_entry_fee_text + ' entry · ' + state.table.tournament_starting_stack_text + ' starting stack · Prize ' + state.table.tournament_prize_pool_text + ' · Vault ' + state.table.tournament_vault_range_text)
                 : (isHouse ? ('The Collector · Buy-in: ' + state.table.min_buyin_text + ' to ' + state.table.max_buyin_text) : ('Buy-in: ' + state.table.min_buyin_text + ' to ' + state.table.max_buyin_text));
 
             var me = state.me.seat ? state.seats[state.me.seat] : null;

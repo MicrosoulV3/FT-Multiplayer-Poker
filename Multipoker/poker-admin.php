@@ -121,6 +121,33 @@ function poker_admin_buyin_display($bytes)
     );
 }
 
+function poker_admin_validate_vault_input($maxSeats)
+{
+    $minimum = poker_admin_parse_buyin(
+        isset($_POST['vault_min_amount']) ? $_POST['vault_min_amount'] : '',
+        isset($_POST['vault_min_unit']) ? $_POST['vault_min_unit'] : 'GB'
+    );
+    $maximum = poker_admin_parse_buyin(
+        isset($_POST['vault_max_amount']) ? $_POST['vault_max_amount'] : '',
+        isset($_POST['vault_max_unit']) ? $_POST['vault_max_unit'] : 'GB'
+    );
+    $minimumPlayers = isset($_POST['vault_min_players']) ? (int)$_POST['vault_min_players'] : 3;
+
+    if ($minimum <= 0 || $maximum <= 0) {
+        throw new RuntimeException('Champion\'s Vault rewards must be greater than zero.');
+    }
+
+    if ($maximum < $minimum) {
+        throw new RuntimeException('Champion\'s Vault maximum cannot be lower than its minimum.');
+    }
+
+    if ($minimumPlayers < 2 || $minimumPlayers > $maxSeats) {
+        throw new RuntimeException('Champion\'s Vault minimum players must be between 2 and the tournament seat limit.');
+    }
+
+    return array($minimum, $maximum, $minimumPlayers);
+}
+
 function poker_admin_validate_table_input()
 {
     $name = isset($_POST['name']) ? trim((string) $_POST['name']) : '';
@@ -382,12 +409,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $seats=isset($_POST['max_seats'])?(int)$_POST['max_seats']:10;
             if($name===''||strlen($name)<2||strlen($name)>64) throw new RuntimeException('Tournament name must be between 2 and 64 characters.');
             if($entry<=0||$chips<100||$sb<=0||$bb<=$sb||$interval<1||$interval>100||$seats<2||$seats>10) throw new RuntimeException('Invalid tournament configuration.');
+            list($vaultMin,$vaultMax,$vaultMinPlayers)=poker_admin_validate_vault_input($seats);
             $empty='[]'; $msg='Tournament registration is open.';
-            $stmt=$db->prepare("INSERT INTO poker_tables (name,small_blind,big_blind,starting_small_blind,starting_big_blind,blind_hands_per_level,min_buyin,max_buyin,max_seats,status,street,current_bet,min_raise,deck_json,community_json,hand_no,last_message,game_type,tournament_status,tournament_entry_fee,tournament_starting_stack,tournament_prize_pool,tournament_entries) VALUES (?,?,?,?,?,?,?, ?,?,'waiting','preflop',0,?,?,?,0,?,'tournament','registration',?,?,0,0)");
+            $stmt=$db->prepare("INSERT INTO poker_tables (name,small_blind,big_blind,starting_small_blind,starting_big_blind,blind_hands_per_level,min_buyin,max_buyin,max_seats,status,street,current_bet,min_raise,deck_json,community_json,hand_no,last_message,game_type,tournament_status,tournament_entry_fee,tournament_starting_stack,tournament_prize_pool,tournament_entries,tournament_vault_min,tournament_vault_max,tournament_vault_min_players) VALUES (?,?,?,?,?,?,?, ?,?,'waiting','preflop',0,?,?,?,0,?,'tournament','registration',?,?,0,0,?,?,?)");
             $dummyMin=$entry; $dummyMax=$chips;
-            $stmt->bind_param('siiiiiiiiisssii',$name,$sb,$bb,$sb,$bb,$interval,$dummyMin,$dummyMax,$seats,$bb,$empty,$empty,$msg,$entry,$chips);
+            $stmt->bind_param('siiiiiiiiisssiiiii',$name,$sb,$bb,$sb,$bb,$interval,$dummyMin,$dummyMax,$seats,$bb,$empty,$empty,$msg,$entry,$chips,$vaultMin,$vaultMax,$vaultMinPlayers);
             $stmt->execute(); $stmt->close();
             poker_admin_redirect('Tournament created: '.$name);
+        }
+
+        if ($action === 'update_tournament_vault') {
+            $tableId = isset($_POST['table_id']) ? (int)$_POST['table_id'] : 0;
+
+            if ($tableId <= 0) {
+                throw new RuntimeException('Invalid tournament.');
+            }
+
+            $stmt = $db->prepare("SELECT name,max_seats,tournament_status FROM poker_tables WHERE id=? AND game_type='tournament' LIMIT 1");
+            $stmt->bind_param('i', $tableId);
+            $stmt->execute();
+            $tournament = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            if (!$tournament) {
+                throw new RuntimeException('Tournament not found.');
+            }
+
+            if ((string)$tournament['tournament_status'] !== 'registration') {
+                throw new RuntimeException('Champion\'s Vault settings cannot be changed after the tournament starts.');
+            }
+
+            list($vaultMin,$vaultMax,$vaultMinPlayers)=poker_admin_validate_vault_input((int)$tournament['max_seats']);
+            $stmt=$db->prepare('UPDATE poker_tables SET tournament_vault_min=?,tournament_vault_max=?,tournament_vault_min_players=? WHERE id=?');
+            $stmt->bind_param('iiii',$vaultMin,$vaultMax,$vaultMinPlayers,$tableId);
+            $stmt->execute();
+            $stmt->close();
+
+            poker_admin_redirect("Champion's Vault updated for ".$tournament['name'].'.', 'success', 'table-'.$tableId);
         }
 
         if ($action === 'start_tournament') {
@@ -646,6 +704,7 @@ $stmt = $db->prepare("SELECT
     t.max_buyin,
     t.max_seats,
     t.game_type,t.tournament_status,t.tournament_entry_fee,t.tournament_starting_stack,t.tournament_prize_pool,t.tournament_entries,
+    t.tournament_vault_min,t.tournament_vault_max,t.tournament_vault_min_players,t.tournament_vault_reward,
     t.status,
     t.hand_no,
     COUNT(DISTINCT CASE WHEN s.user_id>0 THEN s.seat_no END) AS player_count,
@@ -660,7 +719,8 @@ LEFT JOIN poker_chat c ON c.table_id=t.id
 GROUP BY
     t.id,t.name,t.small_blind,t.big_blind,t.starting_small_blind,
     t.starting_big_blind,t.blind_hands_per_level,t.min_buyin,t.max_buyin,
-    t.max_seats,t.game_type,t.tournament_status,t.tournament_entry_fee,t.tournament_starting_stack,t.tournament_prize_pool,t.tournament_entries,t.status,t.hand_no
+    t.max_seats,t.game_type,t.tournament_status,t.tournament_entry_fee,t.tournament_starting_stack,t.tournament_prize_pool,t.tournament_entries,
+    t.tournament_vault_min,t.tournament_vault_max,t.tournament_vault_min_players,t.tournament_vault_reward,t.status,t.hand_no
 ORDER BY t.id ASC");
 $stmt->execute();
 $result = $stmt->get_result();
@@ -1442,10 +1502,13 @@ if (function_exists('begin_frame')) {
                 <div><label>Starting Big Blind (Chips)</label><input type="number" name="tournament_bb" min="2" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'tournament_bb', '100'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
                 <div><label>Increase Blinds Every (Hands)</label><input type="number" name="blind_hands_per_level" min="1" max="100" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'blind_hands_per_level', '5'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
                 <div><label>Seats</label><select name="max_seats"><?php for($i=2;$i<=10;$i++){ ?><option value="<?php echo $i; ?>"<?php echo poker_admin_selected('create-tournament', 'max_seats', $i, '10'); ?>><?php echo $i; ?></option><?php } ?></select></div>
+                <div><label>Vault Minimum</label><div class="buyin-editor"><input type="number" name="vault_min_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'vault_min_amount', '1'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="vault_min_unit"><option<?php echo poker_admin_selected('create-tournament', 'vault_min_unit', 'MB', 'GB'); ?>>MB</option><option<?php echo poker_admin_selected('create-tournament', 'vault_min_unit', 'GB', 'GB'); ?>>GB</option></select></div></div>
+                <div><label>Vault Maximum</label><div class="buyin-editor"><input type="number" name="vault_max_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'vault_max_amount', '10'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required><select name="vault_max_unit"><option<?php echo poker_admin_selected('create-tournament', 'vault_max_unit', 'MB', 'GB'); ?>>MB</option><option<?php echo poker_admin_selected('create-tournament', 'vault_max_unit', 'GB', 'GB'); ?>>GB</option></select></div></div>
+                <div><label>Minimum Players Required</label><input type="number" name="vault_min_players" min="2" max="10" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value('create-tournament', 'vault_min_players', '3'), ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required></div>
                 <div><button class="save-button" type="submit">Create Tournament</button></div>
             </div>
         </form>
-        <div class="small-note">Single-table tournament. Entry fees form a winner-take-all upload-credit prize pool. Every player receives the same tournament chip stack.</div>
+        <div class="small-note">Entry fees form the prize pool. The winner also receives one random Champion's Vault reward between the minimum and maximum amounts.</div>
     </div>
 
     <div class="admin-card">
@@ -1491,6 +1554,8 @@ if (function_exists('begin_frame')) {
             $maxBuyinDisplay = poker_admin_buyin_display($table['max_buyin']);
             $startSmallDisplay = poker_admin_buyin_display($table['starting_small_blind']);
             $startBigDisplay = poker_admin_buyin_display($table['starting_big_blind']);
+            $vaultMinDisplay = poker_admin_buyin_display($table['tournament_vault_min']);
+            $vaultMaxDisplay = poker_admin_buyin_display($table['tournament_vault_max']);
             $isTournament = isset($table['game_type']) && $table['game_type'] === 'tournament';
             $isHouse = isset($table['game_type']) && $table['game_type'] === 'house';
         ?>
@@ -1609,6 +1674,22 @@ if (function_exists('begin_frame')) {
                         <div class="setting-group"><div class="setting-group-title">Starting Blinds</div><strong><?php echo number_format((int)$table['starting_small_blind']); ?> / <?php echo number_format((int)$table['starting_big_blind']); ?></strong></div>
                         <div class="setting-group"><div class="setting-group-title">Prize Pool</div><strong><?php echo htmlspecialchars(poker_format_bytes($table['tournament_prize_pool']), ENT_QUOTES, 'UTF-8'); ?></strong></div>
                         <div class="setting-group"><div class="setting-group-title">Registered</div><strong><?php echo (int)$table['tournament_entries']; ?> / <?php echo (int)$table['max_seats']; ?></strong></div>
+                        <div class="setting-group">
+                            <div class="setting-group-title">Vault Minimum</div>
+                            <div class="buyin-editor">
+                                <input class="number-input" type="number" name="vault_min_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'vault_min_amount', $vaultMinDisplay['amount']), ENT_QUOTES, 'UTF-8'); ?>"<?php echo $table['tournament_status'] !== 'registration' ? ' disabled' : ''; ?> required>
+                                <select name="vault_min_unit"<?php echo $table['tournament_status'] !== 'registration' ? ' disabled' : ''; ?>><option value="MB"<?php echo poker_admin_selected($tableTarget, 'vault_min_unit', 'MB', $vaultMinDisplay['unit']); ?>>MB</option><option value="GB"<?php echo poker_admin_selected($tableTarget, 'vault_min_unit', 'GB', $vaultMinDisplay['unit']); ?>>GB</option></select>
+                            </div>
+                        </div>
+                        <div class="setting-group">
+                            <div class="setting-group-title">Vault Maximum</div>
+                            <div class="buyin-editor">
+                                <input class="number-input" type="number" name="vault_max_amount" min="1" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'vault_max_amount', $vaultMaxDisplay['amount']), ENT_QUOTES, 'UTF-8'); ?>"<?php echo $table['tournament_status'] !== 'registration' ? ' disabled' : ''; ?> required>
+                                <select name="vault_max_unit"<?php echo $table['tournament_status'] !== 'registration' ? ' disabled' : ''; ?>><option value="MB"<?php echo poker_admin_selected($tableTarget, 'vault_max_unit', 'MB', $vaultMaxDisplay['unit']); ?>>MB</option><option value="GB"<?php echo poker_admin_selected($tableTarget, 'vault_max_unit', 'GB', $vaultMaxDisplay['unit']); ?>>GB</option></select>
+                            </div>
+                        </div>
+                        <div class="setting-group"><div class="setting-group-title">Minimum Players Required</div><input class="number-input" type="number" name="vault_min_players" min="2" max="<?php echo (int)$table['max_seats']; ?>" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'vault_min_players', $table['tournament_vault_min_players']), ENT_QUOTES, 'UTF-8'); ?>"<?php echo $table['tournament_status'] !== 'registration' ? ' disabled' : ''; ?> required></div>
+                        <?php if ((int)$table['tournament_vault_reward'] > 0) { ?><div class="setting-group"><div class="setting-group-title">Vault Awarded</div><strong><?php echo htmlspecialchars(poker_format_bytes($table['tournament_vault_reward']), ENT_QUOTES, 'UTF-8'); ?></strong></div><?php } ?>
                     </div>
                     <?php } ?>
 
@@ -1644,6 +1725,7 @@ if (function_exists('begin_frame')) {
 
                         <div class="table-card-actions">
                             <?php if ($isTournament && $table['tournament_status'] === 'registration') { ?>
+                                <button class="save-button" type="submit" name="action" value="update_tournament_vault">Save Vault</button>
                                 <button class="save-button" type="submit" name="action" value="start_tournament">Start Tournament</button>
                             <?php } ?>
                             <?php if (!$isTournament) { ?><button class="save-button" type="submit">Save Changes</button><?php } ?>
@@ -1717,14 +1799,7 @@ function pokerAdminValidateBlindRule(form, focusField) {
         note.textContent = '\u2713 Buy-In / Big Blind: OK';
     }
 
-    if (minimum === null || bigBlind === null) {
-        if (note) {
-            note.classList.add('pending');
-            note.textContent = 'Enter both values to check this rule.';
-        }
-        return true;
-    }
-
+    if (minimum === null || bigBlind === null) return true;
     if (minimum >= bigBlind) return true;
 
     fields.forEach(function (field) {

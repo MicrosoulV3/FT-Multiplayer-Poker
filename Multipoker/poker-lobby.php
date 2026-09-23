@@ -296,6 +296,12 @@ if (function_exists('begin_frame')) {
         text-shadow: 0 0 10px rgba(88, 168, 107, .28);
     }
 
+    #poker-lobby .vault-prize {
+        color: #f1c56b;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
     #poker-lobby .table-meta {
         display: block;
         margin-top: 3px;
@@ -526,7 +532,7 @@ if (function_exists('begin_frame')) {
                 <span class="section-icon">T</span>
                 <div>
                     <h3 class="lobby-section-title">Tournament Tables</h3>
-                    <div class="lobby-section-note">Register, compete, and play for the tournament prize pool.</div>
+                    <div class="lobby-section-note">Compete for the prize pool and a random Champion's Vault reward.</div>
                 </div>
             </div>
             <div class="section-count" id="tournamentCount">0 Events</div>
@@ -540,6 +546,7 @@ if (function_exists('begin_frame')) {
                         <th>Watching</th>
                         <th>Entry</th>
                         <th>Prize Pool</th>
+                        <th>Champion's Vault</th>
                         <th>Blinds</th>
                         <th>Status</th>
                         <th></th>
@@ -805,6 +812,11 @@ if (function_exists('begin_frame')) {
         var prize = document.createElement('td');
         prize.textContent = table.tournament_prize_pool_text;
 
+        var vault = document.createElement('td');
+        vault.className = 'vault-prize';
+        vault.textContent = table.tournament_vault_range_text;
+        vault.title = 'Random winner bonus · Requires ' + table.tournament_vault_min_players + ' players';
+
         var blinds = document.createElement('td');
         blinds.textContent = table.small_blind_text + ' / ' + table.big_blind_text;
 
@@ -836,6 +848,7 @@ if (function_exists('begin_frame')) {
         row.appendChild(watching);
         row.appendChild(entry);
         row.appendChild(prize);
+        row.appendChild(vault);
         row.appendChild(blinds);
         row.appendChild(statusCell);
         row.appendChild(actionCell);

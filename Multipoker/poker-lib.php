@@ -188,8 +188,10 @@ function poker_start_tournament($db, $tableId, $user)
 
         $playerCount = $row ? (int) $row['player_count'] : 0;
 
-        if ($playerCount < 2) {
-            throw new RuntimeException('At least two registered players are required.');
+        $minimumPlayers = max(2, (int)$table['tournament_vault_min_players']);
+
+        if ($playerCount < $minimumPlayers) {
+            throw new RuntimeException('At least ' . $minimumPlayers . ' registered players are required.');
         }
 
         $message = 'Tournament started. Registration is closed. Deal the first hand!';
@@ -219,16 +221,44 @@ function poker_tournament_finalize_if_winner($db, $tableId)
     $stmt->close();
     if(count($alive)!==1) return false;
 
-    $winner=$alive[0]; $prize=(int)$table['tournament_prize_pool'];
-    if($prize>0){
-        $stmt=$db->prepare('UPDATE users SET uploaded=uploaded+? WHERE id=?');
-        $uid=(int)$winner['user_id']; $stmt->bind_param('ii',$prize,$uid); $stmt->execute(); $stmt->close();
+    $winner=$alive[0];
+    $prize=(int)$table['tournament_prize_pool'];
+    $vaultMin=max(0,(int)$table['tournament_vault_min']);
+    $vaultMax=max($vaultMin,(int)$table['tournament_vault_max']);
+    $vaultReward=0;
+
+    if($vaultMax>0 && (int)$table['tournament_entries']>=max(2,(int)$table['tournament_vault_min_players'])){
+        $vaultStep=(($vaultMin%GB)===0 && ($vaultMax%GB)===0)?GB:MB;
+        $vaultReward=random_int(intdiv($vaultMin,$vaultStep),intdiv($vaultMax,$vaultStep))*$vaultStep;
     }
-    $msg=(string)$winner['username'].' wins the tournament and '.poker_format_bytes($prize).' in upload credit!';
+
+    $totalPrize=$prize+$vaultReward;
+    if($totalPrize>0){
+        $stmt=$db->prepare('UPDATE users SET uploaded=uploaded+? WHERE id=?');
+        $uid=(int)$winner['user_id']; $stmt->bind_param('ii',$totalPrize,$uid); $stmt->execute(); $stmt->close();
+    }
+    $msg=(string)$winner['username'].' wins the tournament, '.poker_format_bytes($prize).' from the prize pool';
+    if($vaultReward>0){
+        $msg.=', and '.poker_format_bytes($vaultReward)." from the Champion's Vault!";
+    }else{
+        $msg.='!';
+    }
     $uid=(int)$winner['user_id'];
-    $stmt=$db->prepare("UPDATE poker_tables SET tournament_status='finished',tournament_winner_user_id=?,tournament_ended_at=NOW(),last_message=? WHERE id=?");
-    $stmt->bind_param('isi',$uid,$msg,$tableId); $stmt->execute(); $stmt->close();
+    $stmt=$db->prepare("UPDATE poker_tables SET tournament_status='finished',tournament_winner_user_id=?,tournament_vault_reward=?,tournament_vault_awarded_at=CASE WHEN ?>0 THEN NOW() ELSE NULL END,tournament_ended_at=NOW(),last_message=? WHERE id=?");
+    $stmt->bind_param('iiisi',$uid,$vaultReward,$vaultReward,$msg,$tableId); $stmt->execute(); $stmt->close();
     poker_dealer_message($db,$tableId,$msg);
+
+    if($vaultReward>0){
+        poker_create_user_notice(
+            $db,
+            $uid,
+            $tableId,
+            'tournament_vault',
+            "Champion's Vault Opened",
+            'You won '.poker_format_bytes($vaultReward)." from the Champion's Vault. Your total tournament payout is ".poker_format_bytes($totalPrize).'.',
+            null
+        );
+    }
     return true;
 }
 
@@ -660,6 +690,10 @@ function poker_lobby_data($db, $userId)
             t.tournament_entry_fee,
             t.tournament_starting_stack,
             t.tournament_prize_pool,
+            t.tournament_vault_min,
+            t.tournament_vault_max,
+            t.tournament_vault_min_players,
+            t.tournament_vault_reward,
             t.status,
             t.hand_no,
             SUM(CASE WHEN s.user_id > 0 THEN 1 ELSE 0 END) AS player_count,
@@ -686,6 +720,10 @@ function poker_lobby_data($db, $userId)
             t.tournament_entry_fee,
             t.tournament_starting_stack,
             t.tournament_prize_pool,
+            t.tournament_vault_min,
+            t.tournament_vault_max,
+            t.tournament_vault_min_players,
+            t.tournament_vault_reward,
             t.status,
             t.hand_no
         ORDER BY t.id ASC
@@ -741,6 +779,9 @@ function poker_lobby_data($db, $userId)
             'tournament_entry_fee_text' => poker_format_bytes((int) $row['tournament_entry_fee']),
             'tournament_starting_stack_text' => poker_format_chips((int) $row['tournament_starting_stack']),
             'tournament_prize_pool_text' => poker_format_bytes((int) $row['tournament_prize_pool']),
+            'tournament_vault_range_text' => poker_format_bytes((int)$row['tournament_vault_min']) . ' - ' . poker_format_bytes((int)$row['tournament_vault_max']),
+            'tournament_vault_min_players' => (int)$row['tournament_vault_min_players'],
+            'tournament_vault_reward_text' => (int)$row['tournament_vault_reward'] > 0 ? poker_format_bytes((int)$row['tournament_vault_reward']) : '',
             'my_seat' => (int) $row['my_seat'],
             'spectator_count' => (int) $row['spectator_count']
         );
@@ -3192,6 +3233,9 @@ function poker_public_state($db, $tableId, $userId)
             'tournament_entry_fee_text' => poker_format_bytes((int)$table['tournament_entry_fee']),
             'tournament_starting_stack_text' => poker_format_chips((int)$table['tournament_starting_stack']),
             'tournament_prize_pool_text' => poker_format_bytes((int)$table['tournament_prize_pool']),
+            'tournament_vault_range_text' => poker_format_bytes((int)$table['tournament_vault_min']) . ' - ' . poker_format_bytes((int)$table['tournament_vault_max']),
+            'tournament_vault_min_players' => (int)$table['tournament_vault_min_players'],
+            'tournament_vault_reward_text' => (int)$table['tournament_vault_reward'] > 0 ? poker_format_bytes((int)$table['tournament_vault_reward']) : '',
             'tournament_entries' => (int)$table['tournament_entries'],
             'max_seats' => (poker_is_house_table($table) ? 1 : (int) $table['max_seats']),
             'community' => $community,
