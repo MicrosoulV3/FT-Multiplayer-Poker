@@ -1543,9 +1543,15 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                    linear-gradient(180deg,rgba(24,24,24,.94),rgba(3,3,3,.94));
         border-radius:13px;box-shadow:0 4px 9px rgba(0,0,0,.55);font-weight:700;
     }
+    #modern-poker .seat-marker-tray {
+        position:absolute;top:5px;display:flex;flex-direction:column;gap:3px;
+        z-index:8;pointer-events:none;
+    }
+    #modern-poker .seat-marker-tray.marker-left { left:-10px; }
+    #modern-poker .seat-marker-tray.marker-right { right:-10px; }
     #modern-poker .dealer-button,#modern-poker .blind-button {
-        position:absolute;width:26px;height:26px;border-radius:50%;font-weight:800;line-height:22px;
-        text-align:center;font-size:10px;pointer-events:none;z-index:6;box-shadow:0 3px 7px rgba(0,0,0,.72);
+        position:relative;width:23px;height:23px;border-radius:50%;font-weight:800;line-height:19px;
+        text-align:center;font-size:9px;pointer-events:none;z-index:6;box-shadow:0 3px 7px rgba(0,0,0,.72);
     }
     #modern-poker .dealer-button { background:linear-gradient(#fff,#cfcfcf);color:#111;border:2px solid #777; }
     #modern-poker .blind-button.sb { background:linear-gradient(#bc55d7,#6e2186);color:#fff;border:2px solid #e59bf5; }
@@ -2173,21 +2179,6 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             10: [134, 288]
         };
 
-        /* Marker positions are beside the cards rather than on top of them. */
-        var dealerPositions = {
-            1: [113, 184],
-            2: [222, 142],
-            3: [431, 129],
-            4: [524, 142],
-            5: [630, 184],
-
-            6: [628, 344],
-            7: [572, 379],
-            8: [435, 366],
-            9: [170, 379],
-            10: [113, 344]
-        };
-
         function activeSeatNumbers(state) {
             var numbers = [];
             Object.keys(state.seats || {}).forEach(function(key) {
@@ -2215,28 +2206,23 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             return {sb:sb,bb:nextSeatNumber(players,sb)};
         }
 
-        function addBlindButton(kind, seatNo) {
-            if (!seatNo || !dealerPositions[seatNo]) return;
+        function addSeatMarker(kind, seatNo) {
+            if (!seatNo) return;
 
-            var base = dealerPositions[seatNo];
-            var offsetX = 30;
-            var offsetY = 0;
+            var seat = tableEl.querySelector('.seat[data-seat="' + seatNo + '"]');
+            if (!seat) return;
 
-            /* Keep blind badges clear of both cards and the player HUD. */
-            if (seatNo === 3 || seatNo === 8) {
-                offsetX = kind === 'SB' ? -30 : 30;
-            } else if (seatNo === 4 || seatNo === 5 || seatNo === 6 || seatNo === 7) {
-                offsetX = kind === 'SB' ? 30 : 58;
-            } else {
-                offsetX = kind === 'SB' ? -30 : -58;
+            var tray = seat.querySelector('.seat-marker-tray');
+            if (!tray) {
+                tray = document.createElement('div');
+                tray.className = 'seat-marker-tray ' + ((seatNo === 1 || seatNo === 10) ? 'marker-left' : 'marker-right');
+                seat.appendChild(tray);
             }
 
             var badge = document.createElement('div');
-            badge.className = 'blind-button ' + kind.toLowerCase();
+            badge.className = kind === 'D' ? 'dealer-button' : 'blind-button ' + kind.toLowerCase();
             badge.textContent = kind;
-            badge.style.left = (base[0] + offsetX) + 'px';
-            badge.style.top = (base[1] + offsetY) + 'px';
-            tableEl.appendChild(badge);
+            tray.appendChild(badge);
         }
 
 
@@ -3375,18 +3361,13 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             });
 
             if (state.table.dealer_seat) {
-                var d = document.createElement('div');
-                d.className = 'dealer-button';
-                d.textContent = 'D';
-                d.style.left = dealerPositions[state.table.dealer_seat][0] + 'px';
-                d.style.top = dealerPositions[state.table.dealer_seat][1] + 'px';
-                tableEl.appendChild(d);
+                addSeatMarker('D', state.table.dealer_seat);
             }
 
             if (state.table.status === 'playing' && state.table.dealer_seat) {
                 var blindSeats = blindSeatsForState(state);
-                addBlindButton('SB', blindSeats.sb);
-                addBlindButton('BB', blindSeats.bb);
+                addSeatMarker('SB', blindSeats.sb);
+                addSeatMarker('BB', blindSeats.bb);
             }
 
             state.table.community.forEach(function(card, cardIndex) {
