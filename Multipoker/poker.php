@@ -3539,7 +3539,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 });
             }
 
-            document.getElementById('leaveTable').disabled = !state.me.seat || state.table.status === 'playing';
+            document.getElementById('leaveTable').disabled = !state.me.seat || state.table.status === 'playing' || houseBrokeShown;
 
             var sitOutToggle = document.getElementById('sitOutToggle');
             sitOutToggle.disabled = !state.me.seat || isHouse;
@@ -3711,7 +3711,10 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             button.textContent = 'Leaving...';
 
             post('leave', {}).then(function() {
-                window.location.href = 'poker-lobby.php';
+                houseBrokeShown = false;
+                closeHouseBrokePopup();
+                button.disabled = false;
+                button.textContent = 'Leave Table';
             }).catch(function() {
                 button.disabled = false;
                 button.textContent = 'Leave Table';
@@ -3784,6 +3787,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         });
 
         document.getElementById('leaveTable').addEventListener('click', function() {
+            if (houseBrokeShown) return;
             if (confirm('Leave the poker table and return your remaining stack to upload credit?')) post('leave', {});
         });
         document.getElementById('adminStartTournament').addEventListener('click', function() {
