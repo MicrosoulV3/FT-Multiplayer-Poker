@@ -3799,6 +3799,16 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             navigator.sendBeacon('poker-api.php', body);
         });
 
+        window.addEventListener('beforeunload', function(event) {
+            if (!lastState || !lastState.me || !lastState.me.seat) {
+                return;
+            }
+
+            event.preventDefault();
+            event.returnValue = 'You are seated at an active poker table. Use Leave Table before leaving this page.';
+            return event.returnValue;
+        });
+
         document.getElementById('buyinUnit').addEventListener('change', function() {
             configureBuyinInput(false);
         });
