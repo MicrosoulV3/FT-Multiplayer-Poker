@@ -3639,21 +3639,28 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 }, houseThinkDelay);
             }
 
-            var moveButtons = document.querySelectorAll('#modern-poker .move');
-            moveButtons.forEach(function(b) {
-                b.disabled = !state.me.is_turn || reconnectGraceActive;
-            });
             var checkBtn = document.querySelector('[data-move="check"]');
             var callBtn = document.getElementById('callButton');
 
             configureRaiseInput(false);
+            var canAct = state.table.status === 'playing' && state.me.is_turn && !reconnectGraceActive;
+            var moveButtons = document.querySelectorAll('#modern-poker .move');
+            moveButtons.forEach(function(b) {
+                if (!canAct) {
+                    b.disabled = true;
+                } else if (b.dataset.move !== 'raise') {
+                    b.disabled = false;
+                }
+            });
+            document.getElementById('raiseToAmount').disabled = !canAct;
+            document.getElementById('raiseToUnit').disabled = !canAct;
 
             if (houseTurn) {
                 checkBtn.disabled = true;
                 callBtn.disabled = true;
                 callBtn.textContent = 'Call';
                 document.getElementById('turnNotice').textContent = 'The Collector is thinking...';
-            } else if (state.me.is_turn && !reconnectGraceActive) {
+            } else if (canAct) {
                 checkBtn.disabled = !state.me.can_check;
                 callBtn.disabled = state.me.can_check;
                 callBtn.textContent = state.me.can_check ? 'Call' : 'Call ' + state.me.call_text;
@@ -3903,6 +3910,10 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
 
         document.querySelectorAll('#modern-poker .move').forEach(function(btn) {
             btn.addEventListener('click', function() {
+                if (!lastState || lastState.table.status !== 'playing' || !lastState.me.is_turn) {
+                    return;
+                }
+
                 var move = this.dataset.move;
                 var data = {
                     move: move
