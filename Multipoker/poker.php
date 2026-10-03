@@ -3613,8 +3613,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 houseThinkKey = nextHouseThinkKey;
 
                 var houseThinkDelay = state.table.street === 'preflop'
-                    ? 500 + Math.floor(Math.random() * 400)
-                    : 1200 + Math.floor(Math.random() * 900);
+                    ? 1000 + Math.floor(Math.random() * 1001)
+                    : 2000 + Math.floor(Math.random() * 2001);
                 var latestBoardReveal = houseBoardRevealAt.reduce(function(latest, revealAt) {
                     return Math.max(latest, parseInt(revealAt || 0, 10));
                 }, 0);
