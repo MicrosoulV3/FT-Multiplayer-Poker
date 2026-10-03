@@ -1547,8 +1547,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         position:absolute;top:5px;display:flex;flex-direction:column;gap:3px;
         z-index:8;pointer-events:none;
     }
-    #modern-poker .seat-marker-tray.marker-left { left:-10px; }
-    #modern-poker .seat-marker-tray.marker-right { right:-10px; }
+    #modern-poker .seat-marker-tray.marker-left { left:-30px; }
+    #modern-poker .seat-marker-tray.marker-right { right:-30px; }
     #modern-poker .dealer-button,#modern-poker .blind-button {
         position:relative;width:23px;height:23px;border-radius:50%;font-weight:800;line-height:19px;
         text-align:center;font-size:9px;pointer-events:none;z-index:6;box-shadow:0 3px 7px rgba(0,0,0,.72);
@@ -1834,6 +1834,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         var lastRaiseContextKey = '';
         var statusErrorTimer = null;
         var houseThinkTimer = null;
+        var houseThinkKey = '';
         var houseBrokeShown = false;
         var housePresentationHand = 0;
         var houseHoleRevealAt = {};
@@ -2215,7 +2216,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             var tray = seat.querySelector('.seat-marker-tray');
             if (!tray) {
                 tray = document.createElement('div');
-                tray.className = 'seat-marker-tray ' + ((seatNo === 1 || seatNo === 10) ? 'marker-left' : 'marker-right');
+                tray.className = 'seat-marker-tray ' + ((seatNo === 5 || seatNo === 6) ? 'marker-left' : 'marker-right');
                 seat.appendChild(tray);
             }
 
@@ -3591,16 +3592,46 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             var reconnectGraceActive = !!(currentTurnSeat && currentTurnSeat.reconnecting);
             var houseTurn = !!(isHouse && currentTurnSeat && parseInt(currentTurnSeat.user_id || 0, 10) === 0 && state.table.status === 'playing');
 
-            if (houseThinkTimer) {
-                window.clearTimeout(houseThinkTimer);
+            var nextHouseThinkKey = houseTurn
+                ? [
+                    state.table.hand_no || 0,
+                    state.table.street || '',
+                    state.table.current_turn || 0,
+                    state.table.current_bet || 0,
+                    currentTurnSeat.round_bet || 0,
+                    state.table.pot || 0
+                ].join('|')
+                : '';
+
+            if (!houseTurn) {
+                if (houseThinkTimer) window.clearTimeout(houseThinkTimer);
                 houseThinkTimer = null;
-            }
-            if (houseTurn && !busy) {
+                houseThinkKey = '';
+            } else if (!busy && nextHouseThinkKey !== houseThinkKey) {
+                if (houseThinkTimer) window.clearTimeout(houseThinkTimer);
+
+                houseThinkKey = nextHouseThinkKey;
+
+                var houseThinkDelay = state.table.street === 'preflop'
+                    ? 500 + Math.floor(Math.random() * 400)
+                    : 1200 + Math.floor(Math.random() * 900);
+                var latestBoardReveal = houseBoardRevealAt.reduce(function(latest, revealAt) {
+                    return Math.max(latest, parseInt(revealAt || 0, 10));
+                }, 0);
+
+                if (latestBoardReveal > Date.now()) {
+                    houseThinkDelay = Math.max(houseThinkDelay, latestBoardReveal - Date.now() + 450);
+                }
+
                 houseThinkTimer = window.setTimeout(function() {
+                    houseThinkTimer = null;
+
                     if (!busy && lastState && lastState.table.game_type === 'house') {
-                        post('house_tick', {});
+                        post('house_tick', {}).catch(function() {
+                            houseThinkKey = '';
+                        });
                     }
-                }, 1200 + Math.floor(Math.random() * 900));
+                }, houseThinkDelay);
             }
 
             var moveButtons = document.querySelectorAll('#modern-poker .move');
