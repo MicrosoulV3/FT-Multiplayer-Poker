@@ -2216,7 +2216,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             var tray = seat.querySelector('.seat-marker-tray');
             if (!tray) {
                 tray = document.createElement('div');
-                tray.className = 'seat-marker-tray ' + ((seatNo === 1 || seatNo === 10) ? 'marker-left' : 'marker-right');
+                tray.className = 'seat-marker-tray marker-left';
                 seat.appendChild(tray);
             }
 
@@ -3173,11 +3173,11 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         function formatRaiseAmount(bytes) {
             bytes = Math.max(0, parseInt(bytes || 0, 10));
 
-            if (bytes >= GB) {
-                return trimBuyinNumber(bytes / GB, 4) + ' GB';
+            if (bytes >= GB && bytes % GB === 0) {
+                return (bytes / GB).toLocaleString() + ' GB';
             }
 
-            return trimBuyinNumber(bytes / MB, 2) + ' MB';
+            return Math.floor(bytes / MB).toLocaleString() + ' MB';
         }
 
         function configureRaiseInput(resetValue) {
