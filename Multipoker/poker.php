@@ -1547,8 +1547,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
         position:absolute;top:5px;display:flex;flex-direction:column;gap:3px;
         z-index:8;pointer-events:none;
     }
-    #modern-poker .seat-marker-tray.marker-left { left:-30px; }
-    #modern-poker .seat-marker-tray.marker-right { right:-30px; }
+    #modern-poker .seat-marker-tray.marker-left { left:-10px; }
+    #modern-poker .seat-marker-tray.marker-right { right:-10px; }
     #modern-poker .dealer-button,#modern-poker .blind-button {
         position:relative;width:23px;height:23px;border-radius:50%;font-weight:800;line-height:19px;
         text-align:center;font-size:9px;pointer-events:none;z-index:6;box-shadow:0 3px 7px rgba(0,0,0,.72);
@@ -2216,7 +2216,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             var tray = seat.querySelector('.seat-marker-tray');
             if (!tray) {
                 tray = document.createElement('div');
-                tray.className = 'seat-marker-tray ' + ((seatNo === 5 || seatNo === 6) ? 'marker-left' : 'marker-right');
+                tray.className = 'seat-marker-tray ' + ((seatNo === 1 || seatNo === 10) ? 'marker-left' : 'marker-right');
                 seat.appendChild(tray);
             }
 
@@ -2823,7 +2823,12 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             if (data.is_turn) el.classList.add('turn');
             if (data.state === 'folded') el.classList.add('folded');
             if (data.sitting_out) el.classList.add('sitting-out');
-            if (lastState && lastState.table && lastState.table.game_type === 'house' && parseInt(data.user_id || 0, 10) === 0) {
+            var isCollectorSeat = lastState &&
+                lastState.table &&
+                lastState.table.game_type === 'house' &&
+                parseInt(data.user_id || 0, 10) === 0;
+
+            if (isCollectorSeat) {
                 el.classList.add('collector-seat');
             }
 
@@ -2854,7 +2859,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
             stack.className = 'stack';
             stack.textContent = data.stack_text;
             el.appendChild(stack);
-            if (data.state !== 'waiting') {
+            if (data.state !== 'waiting' && !isCollectorSeat) {
                 var state = document.createElement('div');
                 state.className = 'seat-state';
                 state.textContent = data.state;
@@ -3613,8 +3618,8 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                 houseThinkKey = nextHouseThinkKey;
 
                 var houseThinkDelay = state.table.street === 'preflop'
-                    ? 1000 + Math.floor(Math.random() * 1001)
-                    : 2000 + Math.floor(Math.random() * 2001);
+                    ? 500 + Math.floor(Math.random() * 400)
+                    : 1200 + Math.floor(Math.random() * 900);
                 var latestBoardReveal = houseBoardRevealAt.reduce(function(latest, revealAt) {
                     return Math.max(latest, parseInt(revealAt || 0, 10));
                 }, 0);
