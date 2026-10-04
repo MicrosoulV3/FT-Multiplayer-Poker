@@ -188,7 +188,7 @@ function poker_start_tournament($db, $tableId, $user)
 
         $playerCount = $row ? (int) $row['player_count'] : 0;
 
-        $minimumPlayers = max(2, (int)$table['tournament_vault_min_players']);
+        $minimumPlayers = 2;
 
         if ($playerCount < $minimumPlayers) {
             throw new RuntimeException('At least ' . $minimumPlayers . ' registered players are required.');
@@ -930,13 +930,11 @@ function poker_build_deck()
     $ranks = array('2','3','4','5','6','7','8','9','10','J','Q','K','A');
     $suits = array('C','D','H','S');
     $deck = array();
-
     foreach ($ranks as $rank) {
         foreach ($suits as $suit) {
             $deck[] = $rank . $suit;
         }
     }
-
     for ($i = count($deck) - 1; $i > 0; $i--) {
         $j = random_int(0, $i);
         $temp = $deck[$i];
@@ -946,7 +944,6 @@ function poker_build_deck()
 
     return $deck;
 }
-
 
 function poker_take_card(&$deck)
 {
@@ -1618,8 +1615,8 @@ function poker_leave($db, $tableId, $userId)
         if ($seatNo === null) {
             throw new RuntimeException('You are not seated at this table.');
         }
-        if ($table['status'] === 'playing' && poker_active_for_hand($seats[$seatNo])) {
-            throw new RuntimeException('You cannot leave during an active hand. Fold first, then leave after the hand.');
+        if ($table['status'] === 'playing') {
+            throw new RuntimeException('You cannot leave during an active hand. Wait until the hand is over.');
         }
         $stack = (int) $seats[$seatNo]['stack'];
         $leavingUsername = (string) $seats[$seatNo]['username'];
@@ -1804,7 +1801,7 @@ function poker_start_hand($db, $tableId, $userId)
         if ($count === 2) {
             $sb = $dealer;
             $bb = poker_next_matching_seat($eligible, $sb, function ($s) { return (int) $s['stack'] > 0; });
-            $turnStart = $sb;
+            $turnStart = $bb;
         } else {
             $sb = poker_next_matching_seat($eligible, $dealer, function ($s) { return (int) $s['stack'] > 0; });
             $bb = poker_next_matching_seat($eligible, $sb, function ($s) { return (int) $s['stack'] > 0; });
@@ -1875,16 +1872,14 @@ function poker_start_hand($db, $tableId, $userId)
 
 function poker_round_complete($seats, $currentBet)
 {
-    $canAct = 0;
     foreach ($seats as $seat) {
         if ($seat['hand_state'] === 'active') {
-            $canAct++;
             if (!(int) $seat['acted'] || (int) $seat['round_bet'] !== (int) $currentBet) {
                 return false;
             }
         }
     }
-    return $canAct === 0 || true;
+    return true;
 }
 
 function poker_nonfolded_count($seats)
@@ -3038,6 +3033,7 @@ function poker_public_state($db, $tableId, $userId)
                 street='preflop',
                 dealer_seat=NULL,
                 current_turn=NULL,
+                turn_expires_at=NULL,
                 current_bet=0,
                 min_raise=big_blind,
                 deck_json=?,

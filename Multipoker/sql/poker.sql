@@ -1,4 +1,4 @@
--- FastTracker Poker - 9-11-2026
+-- FastTracker Poker - Complete Fresh Install - 10-04-2026
 
 --   * Run this SQL manually.
 --   * This is intended for a NEW poker installation, not as an upgrade script.
@@ -42,6 +42,11 @@ CREATE TABLE `poker_tables` (
   `tournament_winner_user_id` INT UNSIGNED DEFAULT NULL,
   `tournament_started_at` DATETIME DEFAULT NULL,
   `tournament_ended_at` DATETIME DEFAULT NULL,
+  `tournament_vault_min` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `tournament_vault_max` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `tournament_vault_min_players` TINYINT UNSIGNED NOT NULL DEFAULT 2,
+  `tournament_vault_reward` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `tournament_vault_awarded_at` DATETIME DEFAULT NULL,
 
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -213,9 +218,6 @@ INSERT INTO `poker_settings`
 VALUES
   (1,0,NULL,NULL);
 
-
--- The current admin page reads this table even when no grants exist,
--- so it is part of the master schema.
 CREATE TABLE `poker_starter_grants` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` INT UNSIGNED NOT NULL,
