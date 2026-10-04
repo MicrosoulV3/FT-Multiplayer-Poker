@@ -930,12 +930,20 @@ function poker_build_deck()
     $ranks = array('2','3','4','5','6','7','8','9','10','J','Q','K','A');
     $suits = array('C','D','H','S');
     $deck = array();
+
     foreach ($ranks as $rank) {
         foreach ($suits as $suit) {
             $deck[] = $rank . $suit;
         }
     }
-    shuffle($deck);
+
+    for ($i = count($deck) - 1; $i > 0; $i--) {
+        $j = random_int(0, $i);
+        $temp = $deck[$i];
+        $deck[$i] = $deck[$j];
+        $deck[$j] = $temp;
+    }
+
     return $deck;
 }
 
