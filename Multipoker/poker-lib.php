@@ -947,6 +947,7 @@ function poker_build_deck()
     return $deck;
 }
 
+
 function poker_take_card(&$deck)
 {
     if (!$deck) {
