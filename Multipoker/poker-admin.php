@@ -1082,13 +1082,22 @@ if (function_exists('begin_frame')) {
 
     #poker-admin .manage-settings-layout {
         display: grid;
-        grid-template-columns: minmax(250px, 1.25fr) minmax(310px, 1fr) minmax(310px, 1fr);
-        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px 14px;
         align-items: stretch;
     }
 
     #poker-admin .manage-settings-layout.house-settings {
-        grid-template-columns: minmax(250px, 1.15fr) minmax(310px, 1fr) minmax(310px, 1fr);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #poker-admin .manage-settings-layout:not(.tournament-settings) > .setting-group:first-child {
+        grid-column: 1 / -1;
+    }
+
+    #poker-admin .manage-settings-layout:not(.tournament-settings) > .setting-group:nth-child(2),
+    #poker-admin .manage-settings-layout:not(.tournament-settings) > .setting-group:nth-child(3) {
+        grid-column: span 2;
     }
 
     #poker-admin .setting-group {
@@ -1121,11 +1130,20 @@ if (function_exists('begin_frame')) {
     }
 
     #poker-admin .table-setup-fields {
-        grid-template-columns: minmax(150px, 1.5fr) minmax(80px, .7fr) minmax(70px, .6fr);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px 14px;
+    }
+
+    #poker-admin .table-setup-fields > div:first-child {
+        grid-column: span 2;
     }
 
     #poker-admin .house-settings .table-setup-fields {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #poker-admin .house-settings .table-setup-fields > div:first-child {
+        grid-column: 1 / -1;
     }
 
     #poker-admin .setting-group label {
@@ -1133,7 +1151,8 @@ if (function_exists('begin_frame')) {
     }
 
     #poker-admin .tournament-settings {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px 14px;
     }
 
     #poker-admin .tournament-settings .setting-group {
@@ -1588,7 +1607,7 @@ if (function_exists('begin_frame')) {
 
                                 <?php if (!$isHouse) { ?>
                                 <div>
-                                    <label>Increase Blinds Every (Hands)</label>
+                                    <label>Increase blinds every (hands)</label>
                                     <input class="number-input" type="number" name="blind_hands_per_level" min="1" max="100" step="1" value="<?php echo htmlspecialchars(poker_admin_post_value($tableTarget, 'blind_hands_per_level', $table['blind_hands_per_level']), ENT_QUOTES, 'UTF-8'); ?>" required>
                                 </div>
 

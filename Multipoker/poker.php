@@ -3681,7 +3681,7 @@ $csrf = htmlspecialchars($_SESSION['poker_csrf'], ENT_QUOTES, 'UTF-8');
                     } else {
                         document.getElementById('turnNotice').textContent = isHouse
                             ? (state.table.status === 'playing' ? 'The Collector is thinking...' : 'Ready for the next hand against The Collector.')
-                            : (state.table.status === 'playing' ? 'Waiting for another player...' : 'No hand in progress.');
+                            : (state.table.status === 'playing' ? 'Waiting for the other player to act...' : 'No hand in progress.');
                     }
                 }
                 callBtn.textContent = 'Call';

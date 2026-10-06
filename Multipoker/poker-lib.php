@@ -1333,7 +1333,7 @@ function poker_join($db, $tableId, $seatNo, $buyin, $user)
             $botSeat = poker_house_bot_seat();
             $botUserId = 0;
             $botName = 'The Collector';
-            $botAvatar = 'images/poker/the-collector.webp';
+            $botAvatar = poker_house_random_collector_avatar();
             $botStack = max((int) $table['max_buyin'], $buyin);
             $stmt = $db->prepare("INSERT INTO poker_seats
                 (table_id,seat_no,user_id,username,avatar,stack,round_bet,hand_contribution,hand_state,acted,hole1,hole2,sitting_out,last_seen_at,reconnect_grace_until,reconnect_grace_used)
@@ -3293,6 +3293,33 @@ function poker_house_session_row($db, $templateId, $userId, $forUpdate = false)
     return $row ?: null;
 }
 
+function poker_house_collector_avatars()
+{
+    return array(
+        'images/poker/collector-confident.webp',
+        'images/poker/collector-surprised.webp',
+        'images/poker/collector-angry.webp',
+        'images/poker/collector-suspicious.webp',
+        'images/poker/collector-laughing.webp',
+        'images/poker/collector-disappointed.webp',
+        'images/poker/collector-smug.webp',
+        'images/poker/collector-nervous.webp',
+        'images/poker/collector-delighted.webp',
+        'images/poker/collector-poker-face.webp'
+    );
+}
+
+function poker_house_random_collector_avatar($current = '')
+{
+    $avatars = poker_house_collector_avatars();
+    if ($current !== '' && count($avatars) > 1) {
+        $avatars = array_values(array_filter($avatars, function ($avatar) use ($current) {
+            return $avatar !== $current;
+        }));
+    }
+    return $avatars[random_int(0, count($avatars) - 1)];
+}
+
 function poker_house_default_state($table, $playerStack)
 {
     return array(
@@ -3306,6 +3333,7 @@ function poker_house_default_state($table, $playerStack)
         'deck' => array(),
         'community' => array(),
         'hand_no' => 0,
+        'collector_avatar' => poker_house_random_collector_avatar(),
         'message' => 'Ready when you are...',
         'session_buyin' => (int)$playerStack,
         'player' => array(
@@ -3346,6 +3374,9 @@ function poker_house_decode_state($row, $table)
         } else {
             $state['session_buyin'] = (int)$row['player_stack'];
         }
+    }
+    if (empty($state['collector_avatar'])) {
+        $state['collector_avatar'] = poker_house_random_collector_avatar();
     }
     return $state;
 }
@@ -4009,7 +4040,7 @@ function poker_house_session_public_state($db, $templateId, $userId, $user)
         if ($state['status']==='playing' && $state['bot']['hole1']) $botCards = array('BACK','BACK');
         if ($showdown && $state['bot']['hole1']) $botCards = array($state['bot']['hole1'],$state['bot']['hole2']);
         $seats[poker_house_bot_seat()] = array(
-            'seat'=>poker_house_bot_seat(),'user_id'=>0,'username'=>'The Collector','avatar'=>'images/poker/the-collector.webp','stack'=>(int)$state['bot']['stack'],'stack_text'=>poker_format_bytes($state['bot']['stack']),
+            'seat'=>poker_house_bot_seat(),'user_id'=>0,'username'=>'The Collector','avatar'=>(string)$state['collector_avatar'],'stack'=>(int)$state['bot']['stack'],'stack_text'=>poker_format_bytes($state['bot']['stack']),
             'round_bet'=>(int)$state['bot']['round_bet'],'round_bet_text'=>poker_format_bytes($state['bot']['round_bet']),
             'state'=>(string)$state['bot']['hand_state'],'sitting_out'=>false,'connected'=>true,'reconnecting'=>false,'reconnect_seconds_left'=>0,
             'cards'=>$botCards,'is_turn'=>$state['status']==='playing' && (int)$state['current_turn']===poker_house_bot_seat()
