@@ -215,47 +215,55 @@ function poker_tournament_finalize_if_winner($db, $tableId)
     $table = poker_table_for_update($db, $tableId);
     if (!$table || !poker_is_tournament_table($table) || (string)$table['tournament_status'] !== 'running') return false;
 
-    $stmt=$db->prepare('SELECT seat_no,user_id,username,stack FROM poker_seats WHERE table_id=? AND stack>0 ORDER BY stack DESC FOR UPDATE');
-    $stmt->bind_param('i',$tableId); $stmt->execute(); $result=$stmt->get_result(); $alive=array();
-    while($row=$result->fetch_assoc()) $alive[]=$row;
+    $stmt = $db->prepare('SELECT seat_no,user_id,username,stack FROM poker_seats WHERE table_id=? AND stack>0 ORDER BY stack DESC FOR UPDATE');
+    $stmt->bind_param('i', $tableId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $alive = array();
+    while ($row = $result->fetch_assoc()) $alive[] = $row;
     $stmt->close();
-    if(count($alive)!==1) return false;
+    if (count($alive) !== 1) return false;
 
-    $winner=$alive[0];
-    $prize=(int)$table['tournament_prize_pool'];
-    $vaultMin=max(0,(int)$table['tournament_vault_min']);
-    $vaultMax=max($vaultMin,(int)$table['tournament_vault_max']);
-    $vaultReward=0;
+    $winner = $alive[0];
+    $prize = (int)$table['tournament_prize_pool'];
+    $vaultMin = max(0, (int)$table['tournament_vault_min']);
+    $vaultMax = max($vaultMin, (int)$table['tournament_vault_max']);
+    $vaultReward = 0;
 
-    if($vaultMax>0 && (int)$table['tournament_entries']>=max(2,(int)$table['tournament_vault_min_players'])){
-        $vaultStep=(($vaultMin%GB)===0 && ($vaultMax%GB)===0)?GB:MB;
-        $vaultReward=random_int(intdiv($vaultMin,$vaultStep),intdiv($vaultMax,$vaultStep))*$vaultStep;
+    if ($vaultMax > 0 && (int)$table['tournament_entries'] >= max(2, (int)$table['tournament_vault_min_players'])) {
+        $vaultStep = (($vaultMin % GB) === 0 && ($vaultMax % GB) === 0) ? GB : MB;
+        $vaultReward = random_int(intdiv($vaultMin, $vaultStep), intdiv($vaultMax, $vaultStep)) * $vaultStep;
     }
 
-    $totalPrize=$prize+$vaultReward;
-    if($totalPrize>0){
-        $stmt=$db->prepare('UPDATE users SET uploaded=uploaded+? WHERE id=?');
-        $uid=(int)$winner['user_id']; $stmt->bind_param('ii',$totalPrize,$uid); $stmt->execute(); $stmt->close();
+    $totalPrize = $prize + $vaultReward;
+    if ($totalPrize > 0) {
+        $stmt = $db->prepare('UPDATE users SET uploaded=uploaded+? WHERE id=?');
+        $uid = (int)$winner['user_id'];
+        $stmt->bind_param('ii', $totalPrize, $uid);
+        $stmt->execute();
+        $stmt->close();
     }
-    $msg=(string)$winner['username'].' wins the tournament, '.poker_format_bytes($prize).' from the prize pool';
-    if($vaultReward>0){
-        $msg.=', and '.poker_format_bytes($vaultReward)." from the Champion's Vault!";
-    }else{
-        $msg.='!';
+    $msg = (string)$winner['username'] . ' wins the tournament, ' . poker_format_bytes($prize) . ' from the prize pool';
+    if ($vaultReward > 0) {
+        $msg .= ', and ' . poker_format_bytes($vaultReward) . " from the Champion's Vault!";
+    } else {
+        $msg .= '!';
     }
-    $uid=(int)$winner['user_id'];
-    $stmt=$db->prepare("UPDATE poker_tables SET tournament_status='finished',tournament_winner_user_id=?,tournament_vault_reward=?,tournament_vault_awarded_at=CASE WHEN ?>0 THEN NOW() ELSE NULL END,tournament_ended_at=NOW(),last_message=? WHERE id=?");
-    $stmt->bind_param('iiisi',$uid,$vaultReward,$vaultReward,$msg,$tableId); $stmt->execute(); $stmt->close();
-    poker_dealer_message($db,$tableId,$msg);
+    $uid = (int)$winner['user_id'];
+    $stmt = $db->prepare("UPDATE poker_tables SET tournament_status='finished',tournament_winner_user_id=?,tournament_vault_reward=?,tournament_vault_awarded_at=CASE WHEN ?>0 THEN NOW() ELSE NULL END,tournament_ended_at=NOW(),last_message=? WHERE id=?");
+    $stmt->bind_param('iiisi', $uid, $vaultReward, $vaultReward, $msg, $tableId);
+    $stmt->execute();
+    $stmt->close();
+    poker_dealer_message($db, $tableId, $msg);
 
-    if($vaultReward>0){
+    if ($vaultReward > 0) {
         poker_create_user_notice(
             $db,
             $uid,
             $tableId,
             'tournament_vault',
             "Champion's Vault Opened",
-            'You won '.poker_format_bytes($vaultReward)." from the Champion's Vault. Your total tournament payout is ".poker_format_bytes($totalPrize).'.',
+            'You won ' . poker_format_bytes($vaultReward) . " from the Champion's Vault. Your total tournament payout is " . poker_format_bytes($totalPrize) . '.',
             null
         );
     }
@@ -765,12 +773,12 @@ function poker_lobby_data($db, $userId)
             'status' => $status,
             'status_text' => $statusText,
             'hand_no' => (int) $row['hand_no'],
-            'small_blind_text' => ((string)$row['game_type']==='tournament' ? poker_format_chips((int)$row['small_blind']) : poker_format_bytes((int)$row['small_blind'])),
-            'big_blind_text' => ((string)$row['game_type']==='tournament' ? poker_format_chips((int)$row['big_blind']) : poker_format_bytes((int)$row['big_blind'])),
+            'small_blind_text' => ((string)$row['game_type'] === 'tournament' ? poker_format_chips((int)$row['small_blind']) : poker_format_bytes((int)$row['small_blind'])),
+            'big_blind_text' => ((string)$row['game_type'] === 'tournament' ? poker_format_chips((int)$row['big_blind']) : poker_format_bytes((int)$row['big_blind'])),
             'starting_small_blind' => (int) $row['starting_small_blind'],
-            'starting_small_blind_text' => ((string)$row['game_type']==='tournament' ? poker_format_chips((int)$row['starting_small_blind']) : poker_format_bytes((int)$row['starting_small_blind'])),
+            'starting_small_blind_text' => ((string)$row['game_type'] === 'tournament' ? poker_format_chips((int)$row['starting_small_blind']) : poker_format_bytes((int)$row['starting_small_blind'])),
             'starting_big_blind' => (int) $row['starting_big_blind'],
-            'starting_big_blind_text' => ((string)$row['game_type']==='tournament' ? poker_format_chips((int)$row['starting_big_blind']) : poker_format_bytes((int)$row['starting_big_blind'])),
+            'starting_big_blind_text' => ((string)$row['game_type'] === 'tournament' ? poker_format_chips((int)$row['starting_big_blind']) : poker_format_bytes((int)$row['starting_big_blind'])),
             'blind_hands_per_level' => (int) $row['blind_hands_per_level'],
             'min_buyin_text' => poker_format_bytes((int) $row['min_buyin']),
             'max_buyin_text' => poker_format_bytes((int) $row['max_buyin']),
@@ -927,8 +935,8 @@ function poker_can_act($seat)
 
 function poker_build_deck()
 {
-    $ranks = array('2','3','4','5','6','7','8','9','10','J','Q','K','A');
-    $suits = array('C','D','H','S');
+    $ranks = array('2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A');
+    $suits = array('C', 'D', 'H', 'S');
     $deck = array();
     foreach ($ranks as $rank) {
         foreach ($suits as $suit) {
@@ -1120,7 +1128,7 @@ function poker_history_data($db, $tableId, $viewerUserId, $handNo = 0)
         throw new RuntimeException('Hand history not found.');
     }
 
-    $historyTable = poker_get_table($db,$tableId);
+    $historyTable = poker_get_table($db, $tableId);
     $players = json_decode((string) $hand['players_json'], true);
     $board = json_decode((string) $hand['board_json'], true);
     if (!is_array($players)) $players = array();
@@ -1144,7 +1152,7 @@ function poker_history_data($db, $tableId, $viewerUserId, $handNo = 0)
             )
         );
 
-        $player['starting_stack_text'] = poker_format_table_amount($historyTable,(int) $player['starting_stack']);
+        $player['starting_stack_text'] = poker_format_table_amount($historyTable, (int) $player['starting_stack']);
         $player['cards'] = $maySeeCards
             ? array($player['hole1'], $player['hole2'])
             : array('BACK', 'BACK');
@@ -1177,7 +1185,7 @@ function poker_history_data($db, $tableId, $viewerUserId, $handNo = 0)
             'username' => $username,
             'action' => (string) $row['action_name'],
             'amount' => $amount,
-            'amount_text' => $amount > 0 ? poker_format_table_amount($historyTable,$amount) : '',
+            'amount_text' => $amount > 0 ? poker_format_table_amount($historyTable, $amount) : '',
             'time' => (string) $row['time_text']
         );
     }
@@ -1188,8 +1196,8 @@ function poker_history_data($db, $tableId, $viewerUserId, $handNo = 0)
         'hand' => array(
             'hand_no' => (int) $hand['hand_no'],
             'dealer_seat' => (int) $hand['dealer_seat'],
-            'small_blind_text' => poker_format_table_amount($historyTable,(int) $hand['small_blind']),
-            'big_blind_text' => poker_format_table_amount($historyTable,(int) $hand['big_blind']),
+            'small_blind_text' => poker_format_table_amount($historyTable, (int) $hand['small_blind']),
+            'big_blind_text' => poker_format_table_amount($historyTable, (int) $hand['big_blind']),
             'players' => $players,
             'board' => $board,
             'status' => (string) $hand['status'],
@@ -1344,8 +1352,10 @@ function poker_join($db, $tableId, $seatNo, $buyin, $user)
         }
 
         if ($isTournament) {
-            $stmt=$db->prepare('UPDATE poker_tables SET tournament_prize_pool=tournament_prize_pool+?, tournament_entries=tournament_entries+1 WHERE id=?');
-            $stmt->bind_param('ii',$buyin,$tableId); $stmt->execute(); $stmt->close();
+            $stmt = $db->prepare('UPDATE poker_tables SET tournament_prize_pool=tournament_prize_pool+?, tournament_entries=tournament_entries+1 WHERE id=?');
+            $stmt->bind_param('ii', $buyin, $tableId);
+            $stmt->execute();
+            $stmt->close();
         }
 
         $joinSuffix = $table['status'] === 'playing'
@@ -1628,11 +1638,15 @@ function poker_leave($db, $tableId, $userId)
         }
 
         if ($isTournament && (string)$table['tournament_status'] === 'registration') {
-            $refund=(int)$table['tournament_entry_fee'];
-            $stmt=$db->prepare('UPDATE users SET uploaded=uploaded+? WHERE id=?');
-            $stmt->bind_param('ii',$refund,$userId); $stmt->execute(); $stmt->close();
-            $stmt=$db->prepare('UPDATE poker_tables SET tournament_prize_pool=GREATEST(0,tournament_prize_pool-?), tournament_entries=GREATEST(0,tournament_entries-1) WHERE id=?');
-            $stmt->bind_param('ii',$refund,$tableId); $stmt->execute(); $stmt->close();
+            $refund = (int)$table['tournament_entry_fee'];
+            $stmt = $db->prepare('UPDATE users SET uploaded=uploaded+? WHERE id=?');
+            $stmt->bind_param('ii', $refund, $userId);
+            $stmt->execute();
+            $stmt->close();
+            $stmt = $db->prepare('UPDATE poker_tables SET tournament_prize_pool=GREATEST(0,tournament_prize_pool-?), tournament_entries=GREATEST(0,tournament_entries-1) WHERE id=?');
+            $stmt->bind_param('ii', $refund, $tableId);
+            $stmt->execute();
+            $stmt->close();
         } elseif (!$isTournament) {
             $stmt = $db->prepare('UPDATE users SET uploaded = uploaded + ? WHERE id=?');
             $stmt->bind_param('ii', $stack, $userId);
@@ -1702,7 +1716,10 @@ function poker_leave($db, $tableId, $userId)
     } catch (Throwable $e) {
         if ($db->errno === 0) {
         }
-        try { $db->rollback(); } catch (Throwable $ignored) {}
+        try {
+            $db->rollback();
+        } catch (Throwable $ignored) {
+        }
         throw $e;
     }
 }
@@ -1781,7 +1798,9 @@ function poker_start_hand($db, $tableId, $userId)
         }
 
         $oldDealer = $table['dealer_seat'] === null ? 0 : (int) $table['dealer_seat'];
-        $dealer = poker_next_matching_seat($eligible, $oldDealer, function ($s) { return (int) $s['stack'] > 0; });
+        $dealer = poker_next_matching_seat($eligible, $oldDealer, function ($s) {
+            return (int) $s['stack'] > 0;
+        });
         if ($dealer === null) {
             $dealer = (int) array_key_first($eligible);
         }
@@ -1800,11 +1819,17 @@ function poker_start_hand($db, $tableId, $userId)
         $count = count($eligible);
         if ($count === 2) {
             $sb = $dealer;
-            $bb = poker_next_matching_seat($eligible, $sb, function ($s) { return (int) $s['stack'] > 0; });
+            $bb = poker_next_matching_seat($eligible, $sb, function ($s) {
+                return (int) $s['stack'] > 0;
+            });
             $turnStart = $bb;
         } else {
-            $sb = poker_next_matching_seat($eligible, $dealer, function ($s) { return (int) $s['stack'] > 0; });
-            $bb = poker_next_matching_seat($eligible, $sb, function ($s) { return (int) $s['stack'] > 0; });
+            $sb = poker_next_matching_seat($eligible, $dealer, function ($s) {
+                return (int) $s['stack'] > 0;
+            });
+            $bb = poker_next_matching_seat($eligible, $sb, function ($s) {
+                return (int) $s['stack'] > 0;
+            });
             $turnStart = $bb;
         }
 
@@ -1827,7 +1852,7 @@ function poker_start_hand($db, $tableId, $userId)
         $minRaise = $bigBlind;
         $deckJson = json_encode(array_values($deck));
         $communityJson = json_encode(array());
-        $msg = 'Hand #' . $handNo . ' started. Blinds ' . poker_format_table_amount($table,$smallBlind) . ' / ' . poker_format_table_amount($table,$bigBlind) . '.';
+        $msg = 'Hand #' . $handNo . ' started. Blinds ' . poker_format_table_amount($table, $smallBlind) . ' / ' . poker_format_table_amount($table, $bigBlind) . '.';
 
         $stmt = $db->prepare("UPDATE poker_tables SET status='playing',dealer_seat=?,current_turn=?,turn_expires_at=DATE_ADD(NOW(), INTERVAL 30 SECOND),street='preflop',current_bet=?,min_raise=?,small_blind=?,big_blind=?,deck_json=?,community_json=?,hand_no=?,last_message=? WHERE id=?");
         $stmt->bind_param('iiiiiissisi', $dealer, $turn, $currentBet, $minRaise, $smallBlind, $bigBlind, $deckJson, $communityJson, $handNo, $msg, $tableId);
@@ -1850,7 +1875,7 @@ function poker_start_hand($db, $tableId, $userId)
         poker_dealer_message(
             $db,
             $tableId,
-            'Hand #' . $handNo . ' begins. Blinds are ' . poker_format_table_amount($table,$smallBlind) . ' / ' . poker_format_table_amount($table,$bigBlind) . '.'
+            'Hand #' . $handNo . ' begins. Blinds are ' . poker_format_table_amount($table, $smallBlind) . ' / ' . poker_format_table_amount($table, $bigBlind) . '.'
         );
 
         if ($turn === null) {
@@ -1886,7 +1911,7 @@ function poker_nonfolded_count($seats)
 {
     $n = 0;
     foreach ($seats as $seat) {
-        if (in_array($seat['hand_state'], array('active','allin'), true)) {
+        if (in_array($seat['hand_state'], array('active', 'allin'), true)) {
             $n++;
         }
     }
@@ -1896,7 +1921,7 @@ function poker_nonfolded_count($seats)
 function poker_first_nonfolded($seats)
 {
     foreach ($seats as $seatNo => $seat) {
-        if (in_array($seat['hand_state'], array('active','allin'), true)) {
+        if (in_array($seat['hand_state'], array('active', 'allin'), true)) {
             return $seatNo;
         }
     }
@@ -1907,7 +1932,7 @@ function poker_all_remaining_allin($seats)
 {
     $remaining = 0;
     foreach ($seats as $seat) {
-        if (in_array($seat['hand_state'], array('active','allin'), true)) {
+        if (in_array($seat['hand_state'], array('active', 'allin'), true)) {
             $remaining++;
             if ($seat['hand_state'] === 'active' && (int) $seat['stack'] > 0) {
                 return false;
@@ -2200,10 +2225,10 @@ function poker_award_uncontested($db, $tableId, $table, $seats)
         $tableId,
         (int) $table['hand_no'],
         $community,
-        $seats[$winnerSeat]['username'] . ' wins ' . poker_format_table_amount($table,$pot) . ' (everyone else folded).',
+        $seats[$winnerSeat]['username'] . ' wins ' . poker_format_table_amount($table, $pot) . ' (everyone else folded).',
         $seats
     );
-    poker_tournament_finalize_if_winner($db,$tableId);
+    poker_tournament_finalize_if_winner($db, $tableId);
 }
 
 function poker_finish_hand($db, $tableId, $handNo, $community, $message, $seats)
@@ -2281,7 +2306,7 @@ function poker_advance_street_or_showdown($db, $tableId, $table, $seats)
 
 function poker_action($db, $tableId, $userId, $action, $raiseTo, $automatic = false)
 {
-    $allowed = array('fold','check','call','raise','allin');
+    $allowed = array('fold', 'check', 'call', 'raise', 'allin');
     if (!$automatic && !in_array($action, $allowed, true)) {
         throw new RuntimeException('Unknown poker action.');
     }
@@ -2324,7 +2349,7 @@ function poker_action($db, $tableId, $userId, $action, $raiseTo, $automatic = fa
             $message = $seat['username'] . ($automatic ? ' folds (time expired).' : ' folds.');
         } elseif ($action === 'check') {
             if ($call !== 0) {
-                throw new RuntimeException('You cannot check. There is ' . poker_format_table_amount($table,$call) . ' to call.');
+                throw new RuntimeException('You cannot check. There is ' . poker_format_table_amount($table, $call) . ' to call.');
             }
             $stmt = $db->prepare('UPDATE poker_seats SET acted=1 WHERE table_id=? AND seat_no=?');
             $stmt->bind_param('ii', $tableId, $seatNo);
@@ -2337,7 +2362,7 @@ function poker_action($db, $tableId, $userId, $action, $raiseTo, $automatic = fa
             }
             $r = poker_pay_from_stack($db, $tableId, $seatNo, $call, true);
             $paid = $r['paid'];
-            $message = $seat['username'] . (($r['state'] === 'allin') ? ' calls all-in for ' : ' calls ') . poker_format_table_amount($table,$paid) . '.';
+            $message = $seat['username'] . (($r['state'] === 'allin') ? ' calls all-in for ' : ' calls ') . poker_format_table_amount($table, $paid) . '.';
         } elseif ($action === 'allin') {
             $oldBet = $roundBet;
             $tableWagerRoom = poker_is_tournament_table($table) ? $stack : max(0, (int) $table['max_buyin'] - (int) $seat['hand_contribution']);
@@ -2356,7 +2381,7 @@ function poker_action($db, $tableId, $userId, $action, $raiseTo, $automatic = fa
                 }
                 $newCurrentBet = $resultingBet;
             }
-            $message = $seat['username'] . ' is all-in for ' . poker_format_table_amount($table,$resultingBet) . '.';
+            $message = $seat['username'] . ' is all-in for ' . poker_format_table_amount($table, $resultingBet) . '.';
         } else {
             $raiseTo = (int) $raiseTo;
             $tableWagerRoom = poker_is_tournament_table($table) ? $stack : max(0, (int) $table['max_buyin'] - (int) $seat['hand_contribution']);
@@ -2369,7 +2394,7 @@ function poker_action($db, $tableId, $userId, $action, $raiseTo, $automatic = fa
             }
             $raiseSize = $raiseTo - $currentBet;
             if ($raiseSize < $newMinRaise && $raiseTo !== $maxTo) {
-                throw new RuntimeException('Minimum raise is ' . poker_format_table_amount($table,$newMinRaise) . '.');
+                throw new RuntimeException('Minimum raise is ' . poker_format_table_amount($table, $newMinRaise) . '.');
             }
             $needed = $raiseTo - $roundBet;
             $r = poker_pay_from_stack($db, $tableId, $seatNo, $needed, true);
@@ -2379,7 +2404,7 @@ function poker_action($db, $tableId, $userId, $action, $raiseTo, $automatic = fa
                 $fullRaise = true;
                 $newMinRaise = $raiseSize;
             }
-            $message = $seat['username'] . ' raises to ' . poker_format_table_amount($table,$raiseTo) . '.';
+            $message = $seat['username'] . ' raises to ' . poker_format_table_amount($table, $raiseTo) . '.';
         }
 
         if ($fullRaise) {
@@ -2502,7 +2527,12 @@ function poker_house_estimated_equity($hole1, $hole2, $community, $trials = 180)
 
     for ($i = 0; $i < $trials; $i++) {
         $sample = $deck;
-        shuffle($sample);
+
+        // Secure Fisher-Yates shuffle.
+        for ($j = count($sample) - 1; $j > 0; $j--) {
+            $k = random_int(0, $j);
+            [$sample[$j], $sample[$k]] = [$sample[$k], $sample[$j]];
+        }
 
         $opp1 = array_pop($sample);
         $opp2 = array_pop($sample);
@@ -2612,7 +2642,7 @@ function poker_house_play_turn($db, $tableId)
 
 function poker_rank_value($rank)
 {
-    $map = array('2'=>2,'3'=>3,'4'=>4,'5'=>5,'6'=>6,'7'=>7,'8'=>8,'9'=>9,'10'=>10,'J'=>11,'Q'=>12,'K'=>13,'A'=>14);
+    $map = array('2' => 2, '3' => 3, '4' => 4, '5' => 5, '6' => 6, '7' => 7, '8' => 8, '9' => 9, '10' => 10, 'J' => 11, 'Q' => 12, 'K' => 13, 'A' => 14);
     return isset($map[$rank]) ? $map[$rank] : 0;
 }
 
@@ -2625,10 +2655,12 @@ function poker_parse_card($card)
 
 function poker_score_five($cards)
 {
-    $ranks = array(); $suits = array();
+    $ranks = array();
+    $suits = array();
     foreach ($cards as $card) {
         list($r, $s) = poker_parse_card($card);
-        $ranks[] = $r; $suits[] = $s;
+        $ranks[] = $r;
+        $suits[] = $s;
     }
     rsort($ranks, SORT_NUMERIC);
     $counts = array_count_values($ranks);
@@ -2637,41 +2669,67 @@ function poker_score_five($cards)
     rsort($unique, SORT_NUMERIC);
     if (in_array(14, $unique, true)) $unique[] = 1;
     $straightHigh = 0;
-    for ($i=0; $i<=count($unique)-5; $i++) {
-        if ($unique[$i]-$unique[$i+4] === 4) { $straightHigh=$unique[$i]; break; }
+    for ($i = 0; $i <= count($unique) - 5; $i++) {
+        if ($unique[$i] - $unique[$i + 4] === 4) {
+            $straightHigh = $unique[$i];
+            break;
+        }
     }
     $flush = count(array_unique($suits)) === 1;
-    if ($flush && $straightHigh) return array(8,$straightHigh);
+    if ($flush && $straightHigh) return array(8, $straightHigh);
 
     $groups = array();
-    foreach ($counts as $rank=>$cnt) $groups[] = array((int)$cnt,(int)$rank);
-    usort($groups, function($a,$b){ return $a[0] === $b[0] ? $b[1]-$a[1] : $b[0]-$a[0]; });
+    foreach ($counts as $rank => $cnt) $groups[] = array((int)$cnt, (int)$rank);
+    usort($groups, function ($a, $b) {
+        return $a[0] === $b[0] ? $b[1] - $a[1] : $b[0] - $a[0];
+    });
 
     if ($groups[0][0] === 4) {
-        $kick=0; foreach($ranks as $r){ if($r!==$groups[0][1]){$kick=$r;break;} }
-        return array(7,$groups[0][1],$kick);
+        $kick = 0;
+        foreach ($ranks as $r) {
+            if ($r !== $groups[0][1]) {
+                $kick = $r;
+                break;
+            }
+        }
+        return array(7, $groups[0][1], $kick);
     }
-    if ($groups[0][0] === 3 && isset($groups[1]) && $groups[1][0] >= 2) return array(6,$groups[0][1],$groups[1][1]);
-    if ($flush) return array_merge(array(5),$ranks);
-    if ($straightHigh) return array(4,$straightHigh);
+    if ($groups[0][0] === 3 && isset($groups[1]) && $groups[1][0] >= 2) return array(6, $groups[0][1], $groups[1][1]);
+    if ($flush) return array_merge(array(5), $ranks);
+    if ($straightHigh) return array(4, $straightHigh);
     if ($groups[0][0] === 3) {
-        $k=array(); foreach($ranks as $r){if($r!==$groups[0][1])$k[]=$r;} return array(3,$groups[0][1],$k[0],$k[1]);
+        $k = array();
+        foreach ($ranks as $r) {
+            if ($r !== $groups[0][1]) $k[] = $r;
+        }
+        return array(3, $groups[0][1], $k[0], $k[1]);
     }
     if ($groups[0][0] === 2 && isset($groups[1]) && $groups[1][0] === 2) {
-        $hi=max($groups[0][1],$groups[1][1]); $lo=min($groups[0][1],$groups[1][1]); $kick=0;
-        foreach($ranks as $r){if($r!==$hi && $r!==$lo){$kick=$r;break;}}
-        return array(2,$hi,$lo,$kick);
+        $hi = max($groups[0][1], $groups[1][1]);
+        $lo = min($groups[0][1], $groups[1][1]);
+        $kick = 0;
+        foreach ($ranks as $r) {
+            if ($r !== $hi && $r !== $lo) {
+                $kick = $r;
+                break;
+            }
+        }
+        return array(2, $hi, $lo, $kick);
     }
     if ($groups[0][0] === 2) {
-        $k=array(); foreach($ranks as $r){if($r!==$groups[0][1])$k[]=$r;} return array(1,$groups[0][1],$k[0],$k[1],$k[2]);
+        $k = array();
+        foreach ($ranks as $r) {
+            if ($r !== $groups[0][1]) $k[] = $r;
+        }
+        return array(1, $groups[0][1], $k[0], $k[1], $k[2]);
     }
-    return array_merge(array(0),$ranks);
+    return array_merge(array(0), $ranks);
 }
 
 function poker_compare_score($a, $b)
 {
     $n = max(count($a), count($b));
-    for ($i=0; $i<$n; $i++) {
+    for ($i = 0; $i < $n; $i++) {
         $av = isset($a[$i]) ? $a[$i] : 0;
         $bv = isset($b[$i]) ? $b[$i] : 0;
         if ($av > $bv) return 1;
@@ -2683,17 +2741,18 @@ function poker_compare_score($a, $b)
 function poker_best_score($cards)
 {
     if (count($cards) < 5) throw new RuntimeException('Not enough cards to score hand.');
-    $best = null; $n=count($cards);
-    for($a=0;$a<$n-4;$a++) for($b=$a+1;$b<$n-3;$b++) for($c=$b+1;$c<$n-2;$c++) for($d=$c+1;$d<$n-1;$d++) for($e=$d+1;$e<$n;$e++) {
-        $score=poker_score_five(array($cards[$a],$cards[$b],$cards[$c],$cards[$d],$cards[$e]));
-        if($best===null || poker_compare_score($score,$best)>0) $best=$score;
+    $best = null;
+    $n = count($cards);
+    for ($a = 0; $a < $n - 4; $a++) for ($b = $a + 1; $b < $n - 3; $b++) for ($c = $b + 1; $c < $n - 2; $c++) for ($d = $c + 1; $d < $n - 1; $d++) for ($e = $d + 1; $e < $n; $e++) {
+        $score = poker_score_five(array($cards[$a], $cards[$b], $cards[$c], $cards[$d], $cards[$e]));
+        if ($best === null || poker_compare_score($score, $best) > 0) $best = $score;
     }
     return $best;
 }
 
 function poker_hand_name($score)
 {
-    $names=array('High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush');
+    $names = array('High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush');
     return isset($names[$score[0]]) ? $names[$score[0]] : 'Hand';
 }
 
@@ -2707,46 +2766,67 @@ function poker_showdown($db, $tableId, $table, $seats, $community)
 
     $eligibleScores = array();
     foreach ($seats as $seatNo => $seat) {
-        if (in_array($seat['hand_state'], array('active','allin'), true)) {
-            $eligibleScores[$seatNo] = poker_best_score(array_merge(array($seat['hole1'],$seat['hole2']), $community));
+        if (in_array($seat['hand_state'], array('active', 'allin'), true)) {
+            $eligibleScores[$seatNo] = poker_best_score(array_merge(array($seat['hole1'], $seat['hole2']), $community));
         }
     }
 
     $levels = array();
     foreach ($seats as $seat) {
-        $c=(int)$seat['hand_contribution']; if($c>0)$levels[$c]=$c;
+        $c = (int)$seat['hand_contribution'];
+        if ($c > 0) $levels[$c] = $c;
     }
     sort($levels, SORT_NUMERIC);
-    $prev=0; $awards=array();
-    foreach($levels as $level){
-        $contributors=array();
-        $eligible=array();
-        foreach($seats as $seatNo=>$seat){
-            if((int)$seat['hand_contribution'] >= $level){
-                $contributors[]=$seatNo;
-                if(isset($eligibleScores[$seatNo]))$eligible[]=$seatNo;
+    $prev = 0;
+    $awards = array();
+    foreach ($levels as $level) {
+        $contributors = array();
+        $eligible = array();
+        foreach ($seats as $seatNo => $seat) {
+            if ((int)$seat['hand_contribution'] >= $level) {
+                $contributors[] = $seatNo;
+                if (isset($eligibleScores[$seatNo])) $eligible[] = $seatNo;
             }
         }
-        $pot=($level-$prev)*count($contributors); $prev=$level;
-        if($pot<=0 || !$eligible) continue;
-        $best=null; $winners=array();
-        foreach($eligible as $seatNo){
-            $score=$eligibleScores[$seatNo];
-            if($best===null || poker_compare_score($score,$best)>0){$best=$score;$winners=array($seatNo);} elseif(poker_compare_score($score,$best)===0){$winners[]=$seatNo;}
+        $pot = ($level - $prev) * count($contributors);
+        $prev = $level;
+        if ($pot <= 0 || !$eligible) continue;
+        $best = null;
+        $winners = array();
+        foreach ($eligible as $seatNo) {
+            $score = $eligibleScores[$seatNo];
+            if ($best === null || poker_compare_score($score, $best) > 0) {
+                $best = $score;
+                $winners = array($seatNo);
+            } elseif (poker_compare_score($score, $best) === 0) {
+                $winners[] = $seatNo;
+            }
         }
-        $share=intdiv($pot,count($winners)); $rem=$pot-($share*count($winners));
-        foreach($winners as $idx=>$seatNo){$awards[$seatNo]=isset($awards[$seatNo])?$awards[$seatNo]+$share:$share; if($idx===0)$awards[$seatNo]+=$rem;}
+        $share = intdiv($pot, count($winners));
+        $rem = $pot - ($share * count($winners));
+        foreach ($winners as $idx => $seatNo) {
+            $awards[$seatNo] = isset($awards[$seatNo]) ? $awards[$seatNo] + $share : $share;
+            if ($idx === 0) $awards[$seatNo] += $rem;
+        }
     }
 
-    foreach($awards as $seatNo=>$amount){
-        $stmt=$db->prepare('UPDATE poker_seats SET stack=stack+? WHERE table_id=? AND seat_no=?');
-        $stmt->bind_param('iii',$amount,$tableId,$seatNo); $stmt->execute(); $stmt->close();
+    foreach ($awards as $seatNo => $amount) {
+        $stmt = $db->prepare('UPDATE poker_seats SET stack=stack+? WHERE table_id=? AND seat_no=?');
+        $stmt->bind_param('iii', $amount, $tableId, $seatNo);
+        $stmt->execute();
+        $stmt->close();
     }
-    $names=array();
-    foreach($awards as $seatNo=>$amount){$names[]=$seats[$seatNo]['username'].' wins '.poker_format_table_amount($table,$amount).' with '.poker_hand_name($eligibleScores[$seatNo]);}
-    $communityJson=json_encode(array_values($community));
-    $stmt=$db->prepare("UPDATE poker_tables SET community_json=?,deck_json=?,status='showdown',current_turn=NULL,turn_expires_at=NULL,current_bet=0,last_message=? WHERE id=?");
-    $deckJson=(string)$table['deck_json']; $message=implode(' / ',$names); $stmt->bind_param('sssi',$communityJson,$deckJson,$message,$tableId); $stmt->execute(); $stmt->close();
+    $names = array();
+    foreach ($awards as $seatNo => $amount) {
+        $names[] = $seats[$seatNo]['username'] . ' wins ' . poker_format_table_amount($table, $amount) . ' with ' . poker_hand_name($eligibleScores[$seatNo]);
+    }
+    $communityJson = json_encode(array_values($community));
+    $stmt = $db->prepare("UPDATE poker_tables SET community_json=?,deck_json=?,status='showdown',current_turn=NULL,turn_expires_at=NULL,current_bet=0,last_message=? WHERE id=?");
+    $deckJson = (string)$table['deck_json'];
+    $message = implode(' / ', $names);
+    $stmt->bind_param('sssi', $communityJson, $deckJson, $message, $tableId);
+    $stmt->execute();
+    $stmt->close();
 
     if (!poker_is_tournament_table($table) && !poker_is_house_table($table)) {
         poker_record_player_stats(
@@ -2768,9 +2848,12 @@ function poker_showdown($db, $tableId, $table, $seats, $community)
     );
 
     poker_dealer_message($db, $tableId, $message);
-    poker_tournament_finalize_if_winner($db,$tableId);
+    poker_tournament_finalize_if_winner($db, $tableId);
 
-    $stmt=$db->prepare('UPDATE poker_seats SET round_bet=0,acted=0 WHERE table_id=?'); $stmt->bind_param('i',$tableId); $stmt->execute(); $stmt->close();
+    $stmt = $db->prepare('UPDATE poker_seats SET round_bet=0,acted=0 WHERE table_id=?');
+    $stmt->bind_param('i', $tableId);
+    $stmt->execute();
+    $stmt->close();
 }
 
 function poker_process_timeout($db, $tableId)
@@ -3104,9 +3187,9 @@ function poker_public_state($db, $tableId, $userId)
             'username' => $s['username'],
             'avatar' => $s['avatar'],
             'stack' => (int) $s['stack'],
-            'stack_text' => poker_format_table_amount($table,$s['stack']),
+            'stack_text' => poker_format_table_amount($table, $s['stack']),
             'round_bet' => (int) $s['round_bet'],
-            'round_bet_text' => poker_format_table_amount($table,$s['round_bet']),
+            'round_bet_text' => poker_format_table_amount($table, $s['round_bet']),
             'state' => (poker_is_tournament_table($table) && (string)$table['tournament_status'] !== 'registration' && (int)$s['stack'] <= 0) ? 'eliminated' : $s['hand_state'],
             'sitting_out' => !empty($s['sitting_out']),
             'connected' => ((int) $s['user_id'] === 0) ? true : ((int) $s['presence_age_seconds'] <= (int) POKER_PRESENCE_STALE_SECONDS),
@@ -3215,19 +3298,19 @@ function poker_public_state($db, $tableId, $userId)
             'turn_expires_at' => $table['turn_expires_at'],
             'reconnect_grace_seconds' => (int) POKER_RECONNECT_GRACE_SECONDS,
             'pot' => $pot,
-            'pot_text' => poker_format_table_amount($table,$pot),
+            'pot_text' => poker_format_table_amount($table, $pot),
             'current_bet' => (int) $table['current_bet'],
-            'current_bet_text' => poker_format_table_amount($table,$table['current_bet']),
+            'current_bet_text' => poker_format_table_amount($table, $table['current_bet']),
             'min_raise' => (int) $table['min_raise'],
-            'min_raise_text' => poker_format_table_amount($table,$table['min_raise']),
+            'min_raise_text' => poker_format_table_amount($table, $table['min_raise']),
             'small_blind' => (int) $table['small_blind'],
-            'small_blind_text' => poker_format_table_amount($table,$table['small_blind']),
+            'small_blind_text' => poker_format_table_amount($table, $table['small_blind']),
             'big_blind' => (int) $table['big_blind'],
-            'big_blind_text' => poker_format_table_amount($table,$table['big_blind']),
+            'big_blind_text' => poker_format_table_amount($table, $table['big_blind']),
             'starting_small_blind' => (int) $table['starting_small_blind'],
-            'starting_small_blind_text' => poker_format_table_amount($table,$table['starting_small_blind']),
+            'starting_small_blind_text' => poker_format_table_amount($table, $table['starting_small_blind']),
             'starting_big_blind' => (int) $table['starting_big_blind'],
-            'starting_big_blind_text' => poker_format_table_amount($table,$table['starting_big_blind']),
+            'starting_big_blind_text' => poker_format_table_amount($table, $table['starting_big_blind']),
             'blind_hands_per_level' => (int) $table['blind_hands_per_level'],
             'min_buyin' => (int) $table['min_buyin'],
             'min_buyin_text' => poker_format_bytes($table['min_buyin']),
@@ -3261,7 +3344,7 @@ function poker_public_state($db, $tableId, $userId)
                 !empty($seats[$mySeat]['sitting_out'])
             ),
             'call' => $call,
-            'call_text' => poker_format_table_amount($table,$call),
+            'call_text' => poker_format_table_amount($table, $call),
             'can_check' => $canCheck,
             'max_raise_to' => $maxTo,
             'uploaded_credit' => $uploadedCredit,
@@ -3544,7 +3627,7 @@ function poker_house_start_session_hand($db, $templateId, $userId)
         // Match the House stack to the player's original session buy-in for every hand.
         $houseStack = isset($state['session_buyin']) ? (int)$state['session_buyin'] : (int)$row['player_stack'];
         $state['bot']['stack'] = max($houseStack, $bigBlind);
-        foreach (array('player','bot') as $k) {
+        foreach (array('player', 'bot') as $k) {
             $state[$k]['round_bet'] = 0;
             $state[$k]['hand_contribution'] = 0;
             $state[$k]['hand_state'] = 'active';
@@ -3608,8 +3691,8 @@ function poker_house_finish_session_hand(&$state, $winner, $message)
         'started' => isset($state['hand_started']) ? (string)$state['hand_started'] : '',
         'ended' => date('M j, Y H:i:s'),
         'players' => array(
-            array('seat_no'=>poker_house_player_seat(),'username'=>'You','starting_stack_text'=>poker_format_bytes(isset($state['player_starting_stack']) ? (int)$state['player_starting_stack'] : 0),'cards'=>array($state['player']['hole1'],$state['player']['hole2'])),
-            array('seat_no'=>poker_house_bot_seat(),'username'=>'The Collector','starting_stack_text'=>poker_format_bytes(isset($state['bot_starting_stack']) ? (int)$state['bot_starting_stack'] : 0),'cards'=>($state['player']['hand_state'] !== 'folded' && $state['bot']['hand_state'] !== 'folded') ? array($state['bot']['hole1'],$state['bot']['hole2']) : array())
+            array('seat_no' => poker_house_player_seat(), 'username' => 'You', 'starting_stack_text' => poker_format_bytes(isset($state['player_starting_stack']) ? (int)$state['player_starting_stack'] : 0), 'cards' => array($state['player']['hole1'], $state['player']['hole2'])),
+            array('seat_no' => poker_house_bot_seat(), 'username' => 'The Collector', 'starting_stack_text' => poker_format_bytes(isset($state['bot_starting_stack']) ? (int)$state['bot_starting_stack'] : 0), 'cards' => ($state['player']['hand_state'] !== 'folded' && $state['bot']['hand_state'] !== 'folded') ? array($state['bot']['hole1'], $state['bot']['hole2']) : array())
         ),
         'actions' => $state['actions']
     );
@@ -3707,7 +3790,7 @@ function poker_house_advance_session(&$state, $table)
         return;
     }
 
-    foreach (array('player','bot') as $k) {
+    foreach (array('player', 'bot') as $k) {
         $state[$k]['round_bet'] = 0;
         $state[$k]['acted'] = 0;
     }
@@ -3746,7 +3829,7 @@ function poker_house_session_action($db, $templateId, $userId, $action, $raiseTo
         if ((int)$state['current_turn'] !== $seatNo) throw new RuntimeException('It is not your turn.');
         $who = $automatic ? 'bot' : 'player';
         $other = $who === 'player' ? 'bot' : 'player';
-        $seat =& $state[$who];
+        $seat = &$state[$who];
         $call = max(0, (int)$state['current_bet'] - (int)$seat['round_bet']);
         $name = $automatic ? 'The Collector' : (string)$row['username'];
         $action = strtolower((string)$action);
@@ -4025,66 +4108,136 @@ function poker_house_session_public_state($db, $templateId, $userId, $user)
         $stmt->close();
     }
     $seats = array();
-    for ($i=1;$i<=10;$i++) $seats[$i]=null;
+    for ($i = 1; $i <= 10; $i++) $seats[$i] = null;
     if ($row) {
         $showdown = $state['status'] === 'showdown';
         $seats[poker_house_player_seat()] = array(
-            'seat'=>poker_house_player_seat(),'user_id'=>$userId,'username'=>(string)$row['username'],'avatar'=>isset($user['avatar'])?(string)$user['avatar']:'',
-            'stack'=>(int)$state['player']['stack'],'stack_text'=>poker_format_bytes($state['player']['stack']),
-            'round_bet'=>(int)$state['player']['round_bet'],'round_bet_text'=>poker_format_bytes($state['player']['round_bet']),
-            'state'=>(string)$state['player']['hand_state'],'sitting_out'=>false,'connected'=>true,'reconnecting'=>false,'reconnect_seconds_left'=>0,
-            'cards'=>($state['status']==='playing'||$showdown) && $state['player']['hole1'] ? array($state['player']['hole1'],$state['player']['hole2']) : array(),
-            'is_turn'=>$state['status']==='playing' && (int)$state['current_turn']===poker_house_player_seat()
+            'seat' => poker_house_player_seat(),
+            'user_id' => $userId,
+            'username' => (string)$row['username'],
+            'avatar' => isset($user['avatar']) ? (string)$user['avatar'] : '',
+            'stack' => (int)$state['player']['stack'],
+            'stack_text' => poker_format_bytes($state['player']['stack']),
+            'round_bet' => (int)$state['player']['round_bet'],
+            'round_bet_text' => poker_format_bytes($state['player']['round_bet']),
+            'state' => (string)$state['player']['hand_state'],
+            'sitting_out' => false,
+            'connected' => true,
+            'reconnecting' => false,
+            'reconnect_seconds_left' => 0,
+            'cards' => ($state['status'] === 'playing' || $showdown) && $state['player']['hole1'] ? array($state['player']['hole1'], $state['player']['hole2']) : array(),
+            'is_turn' => $state['status'] === 'playing' && (int)$state['current_turn'] === poker_house_player_seat()
         );
         $botCards = array();
-        if ($state['status']==='playing' && $state['bot']['hole1']) $botCards = array('BACK','BACK');
-        if ($showdown && $state['bot']['hole1']) $botCards = array($state['bot']['hole1'],$state['bot']['hole2']);
+        if ($state['status'] === 'playing' && $state['bot']['hole1']) $botCards = array('BACK', 'BACK');
+        if ($showdown && $state['bot']['hole1']) $botCards = array($state['bot']['hole1'], $state['bot']['hole2']);
         $seats[poker_house_bot_seat()] = array(
-            'seat'=>poker_house_bot_seat(),'user_id'=>0,'username'=>'The Collector','avatar'=>(string)$state['collector_avatar'],'stack'=>(int)$state['bot']['stack'],'stack_text'=>poker_format_bytes($state['bot']['stack']),
-            'round_bet'=>(int)$state['bot']['round_bet'],'round_bet_text'=>poker_format_bytes($state['bot']['round_bet']),
-            'state'=>(string)$state['bot']['hand_state'],'sitting_out'=>false,'connected'=>true,'reconnecting'=>false,'reconnect_seconds_left'=>0,
-            'cards'=>$botCards,'is_turn'=>$state['status']==='playing' && (int)$state['current_turn']===poker_house_bot_seat()
+            'seat' => poker_house_bot_seat(),
+            'user_id' => 0,
+            'username' => 'The Collector',
+            'avatar' => (string)$state['collector_avatar'],
+            'stack' => (int)$state['bot']['stack'],
+            'stack_text' => poker_format_bytes($state['bot']['stack']),
+            'round_bet' => (int)$state['bot']['round_bet'],
+            'round_bet_text' => poker_format_bytes($state['bot']['round_bet']),
+            'state' => (string)$state['bot']['hand_state'],
+            'sitting_out' => false,
+            'connected' => true,
+            'reconnecting' => false,
+            'reconnect_seconds_left' => 0,
+            'cards' => $botCards,
+            'is_turn' => $state['status'] === 'playing' && (int)$state['current_turn'] === poker_house_bot_seat()
         );
     }
     $pot = (int)$state['player']['hand_contribution'] + (int)$state['bot']['hand_contribution'];
-    $call = $row ? max(0,(int)$state['current_bet']-(int)$state['player']['round_bet']) : 0;
-    $maxTo = $row ? poker_house_effective_max_to($state,'player',$table) : 0;
+    $call = $row ? max(0, (int)$state['current_bet'] - (int)$state['player']['round_bet']) : 0;
+    $maxTo = $row ? poker_house_effective_max_to($state, 'player', $table) : 0;
 
-    $stmt=$db->prepare('SELECT uploaded FROM users WHERE id=? LIMIT 1');
-    $stmt->bind_param('i',$userId);$stmt->execute();$acc=$stmt->get_result()->fetch_assoc();$stmt->close();
-    $uploaded=$acc?(int)$acc['uploaded']:0;
-    $stmt=$db->prepare('SELECT COALESCE(SUM(player_stack),0) AS total FROM poker_house_sessions WHERE user_id=? AND active=1');
-    $stmt->bind_param('i',$userId);$stmt->execute();$r=$stmt->get_result()->fetch_assoc();$stmt->close();
-    $houseStack=$r?(int)$r['total']:0;
-    $stmt=$db->prepare("SELECT COALESCE(SUM(s.stack),0) AS total FROM poker_seats s INNER JOIN poker_tables t ON t.id=s.table_id AND t.game_type='cash' WHERE s.user_id=?");
-    $stmt->bind_param('i',$userId);$stmt->execute();$r=$stmt->get_result()->fetch_assoc();$stmt->close();
-    $cashStack=$r?(int)$r['total']:0;
-    $totalCredit=$uploaded+$houseStack+$cashStack;
-    $turnLeft=0;
-    if (!empty($state['turn_expires_at'])) $turnLeft=max(0,strtotime($state['turn_expires_at'])-time());
-    $maintenanceState=poker_maintenance_state($db);
+    $stmt = $db->prepare('SELECT uploaded FROM users WHERE id=? LIMIT 1');
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $acc = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    $uploaded = $acc ? (int)$acc['uploaded'] : 0;
+    $stmt = $db->prepare('SELECT COALESCE(SUM(player_stack),0) AS total FROM poker_house_sessions WHERE user_id=? AND active=1');
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $r = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    $houseStack = $r ? (int)$r['total'] : 0;
+    $stmt = $db->prepare("SELECT COALESCE(SUM(s.stack),0) AS total FROM poker_seats s INNER JOIN poker_tables t ON t.id=s.table_id AND t.game_type='cash' WHERE s.user_id=?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $r = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    $cashStack = $r ? (int)$r['total'] : 0;
+    $totalCredit = $uploaded + $houseStack + $cashStack;
+    $turnLeft = 0;
+    if (!empty($state['turn_expires_at'])) $turnLeft = max(0, strtotime($state['turn_expires_at']) - time());
+    $maintenanceState = poker_maintenance_state($db);
 
     return array(
-        'ok'=>true,
-        'maintenance'=>array('state'=>$maintenanceState,'draining'=>$maintenanceState===1,'offline'=>$maintenanceState===2),
-        'table'=>array(
-            'id'=>(int)$table['id'],'name'=>(string)$table['name'],'status'=>(string)$state['status'],'street'=>(string)$state['street'],
-            'dealer_seat'=>$state['dealer_seat']===null?null:(int)$state['dealer_seat'],'current_turn'=>$state['current_turn']===null?null:(int)$state['current_turn'],
-            'turn_seconds'=>POKER_TURN_SECONDS,'turn_seconds_left'=>$turnLeft,'turn_expires_at'=>$state['turn_expires_at'],'reconnect_grace_seconds'=>0,
-            'pot'=>$pot,'pot_text'=>poker_format_bytes($pot),'current_bet'=>(int)$state['current_bet'],'current_bet_text'=>poker_format_bytes($state['current_bet']),
-            'min_raise'=>(int)$state['min_raise'],'min_raise_text'=>poker_format_bytes($state['min_raise']),
-            'small_blind'=>(isset($state['hand_small_blind']) ? (int)$state['hand_small_blind'] : (int)$table['small_blind']),'small_blind_text'=>poker_format_bytes(isset($state['hand_small_blind']) ? (int)$state['hand_small_blind'] : (int)$table['small_blind']),'big_blind'=>(isset($state['hand_big_blind']) ? (int)$state['hand_big_blind'] : (int)$table['big_blind']),'big_blind_text'=>poker_format_bytes(isset($state['hand_big_blind']) ? (int)$state['hand_big_blind'] : (int)$table['big_blind']),
-            'starting_small_blind'=>(int)$table['starting_small_blind'],'starting_small_blind_text'=>poker_format_bytes($table['starting_small_blind']),
-            'starting_big_blind'=>(int)$table['starting_big_blind'],'starting_big_blind_text'=>poker_format_bytes($table['starting_big_blind']),'blind_hands_per_level'=>(int)$table['blind_hands_per_level'],
-            'min_buyin'=>(int)$table['min_buyin'],'min_buyin_text'=>poker_format_bytes($table['min_buyin']),'max_buyin'=>(int)$table['max_buyin'],'max_buyin_text'=>poker_format_bytes($table['max_buyin']),
-            'game_type'=>'house','tournament_status'=>'registration','tournament_entry_fee_text'=>poker_format_bytes(0),'tournament_starting_stack_text'=>poker_format_chips(0),'tournament_prize_pool_text'=>poker_format_bytes(0),'tournament_entries'=>0,
-            'max_seats'=>1,'community'=>$state['community'],'hand_no'=>(int)$state['hand_no'],'message'=>(string)$state['message']
+        'ok' => true,
+        'maintenance' => array('state' => $maintenanceState, 'draining' => $maintenanceState === 1, 'offline' => $maintenanceState === 2),
+        'table' => array(
+            'id' => (int)$table['id'],
+            'name' => (string)$table['name'],
+            'status' => (string)$state['status'],
+            'street' => (string)$state['street'],
+            'dealer_seat' => $state['dealer_seat'] === null ? null : (int)$state['dealer_seat'],
+            'current_turn' => $state['current_turn'] === null ? null : (int)$state['current_turn'],
+            'turn_seconds' => POKER_TURN_SECONDS,
+            'turn_seconds_left' => $turnLeft,
+            'turn_expires_at' => $state['turn_expires_at'],
+            'reconnect_grace_seconds' => 0,
+            'pot' => $pot,
+            'pot_text' => poker_format_bytes($pot),
+            'current_bet' => (int)$state['current_bet'],
+            'current_bet_text' => poker_format_bytes($state['current_bet']),
+            'min_raise' => (int)$state['min_raise'],
+            'min_raise_text' => poker_format_bytes($state['min_raise']),
+            'small_blind' => (isset($state['hand_small_blind']) ? (int)$state['hand_small_blind'] : (int)$table['small_blind']),
+            'small_blind_text' => poker_format_bytes(isset($state['hand_small_blind']) ? (int)$state['hand_small_blind'] : (int)$table['small_blind']),
+            'big_blind' => (isset($state['hand_big_blind']) ? (int)$state['hand_big_blind'] : (int)$table['big_blind']),
+            'big_blind_text' => poker_format_bytes(isset($state['hand_big_blind']) ? (int)$state['hand_big_blind'] : (int)$table['big_blind']),
+            'starting_small_blind' => (int)$table['starting_small_blind'],
+            'starting_small_blind_text' => poker_format_bytes($table['starting_small_blind']),
+            'starting_big_blind' => (int)$table['starting_big_blind'],
+            'starting_big_blind_text' => poker_format_bytes($table['starting_big_blind']),
+            'blind_hands_per_level' => (int)$table['blind_hands_per_level'],
+            'min_buyin' => (int)$table['min_buyin'],
+            'min_buyin_text' => poker_format_bytes($table['min_buyin']),
+            'max_buyin' => (int)$table['max_buyin'],
+            'max_buyin_text' => poker_format_bytes($table['max_buyin']),
+            'game_type' => 'house',
+            'tournament_status' => 'registration',
+            'tournament_entry_fee_text' => poker_format_bytes(0),
+            'tournament_starting_stack_text' => poker_format_chips(0),
+            'tournament_prize_pool_text' => poker_format_bytes(0),
+            'tournament_entries' => 0,
+            'max_seats' => 1,
+            'community' => $state['community'],
+            'hand_no' => (int)$state['hand_no'],
+            'message' => (string)$state['message']
         ),
-        'seats'=>$seats,'spectators'=>array(),'spectator_count'=>0,'chat'=>array(),
-        'me'=>array(
-            'seat'=>$row?poker_house_player_seat():null,'is_admin'=>poker_user_is_admin($user),'is_turn'=>$row&&$state['status']==='playing'&&(int)$state['current_turn']===poker_house_player_seat(),
-            'can_check'=>$call===0,'call'=>$call,'call_text'=>poker_format_bytes($call),'max_raise_to'=>$maxTo,'max_raise_to_text'=>poker_format_bytes($maxTo),'sitting_out'=>false,
-            'uploaded_credit'=>$uploaded,'uploaded_credit_text'=>poker_format_bytes($uploaded),'total_credit'=>$totalCredit,'total_credit_text'=>poker_format_bytes($totalCredit)
+        'seats' => $seats,
+        'spectators' => array(),
+        'spectator_count' => 0,
+        'chat' => array(),
+        'me' => array(
+            'seat' => $row ? poker_house_player_seat() : null,
+            'is_admin' => poker_user_is_admin($user),
+            'is_turn' => $row && $state['status'] === 'playing' && (int)$state['current_turn'] === poker_house_player_seat(),
+            'can_check' => $call === 0,
+            'call' => $call,
+            'call_text' => poker_format_bytes($call),
+            'max_raise_to' => $maxTo,
+            'max_raise_to_text' => poker_format_bytes($maxTo),
+            'sitting_out' => false,
+            'uploaded_credit' => $uploaded,
+            'uploaded_credit_text' => poker_format_bytes($uploaded),
+            'total_credit' => $totalCredit,
+            'total_credit_text' => poker_format_bytes($totalCredit)
         )
     );
 }
