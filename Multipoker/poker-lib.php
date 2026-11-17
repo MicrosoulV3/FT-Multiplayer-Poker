@@ -12,11 +12,6 @@ if (!defined('GB')) {
     define('GB', 1024 * MB);
 }
 
-/* Backward-compatible alias for older poker code. */
-if (!defined('POKER_BYTES_GB')) {
-    define('POKER_BYTES_GB', GB);
-}
-
 if (!defined('POKER_TURN_SECONDS')) {
     define('POKER_TURN_SECONDS', 30);
 }
