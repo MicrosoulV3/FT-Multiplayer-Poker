@@ -1,5 +1,5 @@
 <?php
-// Burp fart. I had to clean this up
+// Burp fart. I had to clean this up. Simplified the defines
 define('KB', 1024);
 define('MB', 1024 * KB);
 define('GB', 1024 * MB);
