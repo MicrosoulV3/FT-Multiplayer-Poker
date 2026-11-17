@@ -1,49 +1,16 @@
 <?php
 
-if (!defined('KB')) {
-    define('KB', 1024);
-}
+define('KB', 1024);
+define('MB', 1024 * KB);
+define('GB', 1024 * MB);
 
-if (!defined('MB')) {
-    define('MB', 1024 * KB);
-}
-
-if (!defined('GB')) {
-    define('GB', 1024 * MB);
-}
-
-/* Backward-compatible alias for older poker code. */
-if (!defined('POKER_BYTES_GB')) {
-    define('POKER_BYTES_GB', GB);
-}
-
-if (!defined('POKER_TURN_SECONDS')) {
-    define('POKER_TURN_SECONDS', 30);
-}
-
-if (!defined('POKER_RECONNECT_GRACE_SECONDS')) {
-    define('POKER_RECONNECT_GRACE_SECONDS', 15);
-}
-
-if (!defined('POKER_PRESENCE_HEARTBEAT_SECONDS')) {
-    define('POKER_PRESENCE_HEARTBEAT_SECONDS', 10);
-}
-
-if (!defined('POKER_PRESENCE_STALE_SECONDS')) {
-    define('POKER_PRESENCE_STALE_SECONDS', 15);
-}
-
-if (!defined('POKER_SPECTATOR_STALE_SECONDS')) {
-    define('POKER_SPECTATOR_STALE_SECONDS', 12);
-}
-
-if (!defined('POKER_STARTER_STAKE')) {
-    define('POKER_STARTER_STAKE', 1 * GB);
-}
-
-if (!defined('POKER_STARTER_ACTIVITY_LIMIT')) {
-    define('POKER_STARTER_ACTIVITY_LIMIT', 1 * MB);
-}
+define('POKER_TURN_SECONDS', 30);
+define('POKER_RECONNECT_GRACE_SECONDS', 15);
+define('POKER_PRESENCE_HEARTBEAT_SECONDS', 10);
+define('POKER_PRESENCE_STALE_SECONDS', 15);
+define('POKER_SPECTATOR_STALE_SECONDS', 12);
+define('POKER_STARTER_STAKE', 1 * GB);
+define('POKER_STARTER_ACTIVITY_LIMIT', 1 * MB);
 
 function poker_session_init()
 {
