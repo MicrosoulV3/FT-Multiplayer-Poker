@@ -234,10 +234,10 @@ FastTracker Poker is an integrated TorrentTrader module and expects access to th
 
 General installation consists of:
 
-1. Copy the poker files into the TorrentTrader installation.
-2. Import the supplied poker SQL schema into the TorrentTrader database.
+1. Copy the poker files into your root directory.
+2. Import the supplied poker SQL database.
 3. Install the supplied poker images and audio assets.
-4. Verify the TorrentTrader database and authentication includes.
+4. Verify the database and authentication includes.
 5. Configure the required poker administrator permission level.
 6. Open the Poker Admin Manager.
 7. Create the desired multiplayer, tournament, and house tables.
