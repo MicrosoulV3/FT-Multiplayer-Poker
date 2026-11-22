@@ -232,7 +232,7 @@ The poker system is intended primarily for desktop use.
 
 FastTracker Poker is an integrated TorrentTrader module and expects access to the existing TorrentTrader environment.
 
-General installation consists of:
+install:
 
 1. Copy the poker files into your root directory.
 2. Import the supplied poker SQL database.
