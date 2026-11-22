@@ -44,7 +44,7 @@ function poker_db()
         return $GLOBALS['DBconnector'];
     }
 
-    throw new RuntimeException('Poker could not locate the tracker mysqli connection.');
+    throw new RuntimeException('No database connection.');
 }
 
 function poker_user_is_admin($user)
@@ -62,7 +62,7 @@ function poker_lock_settings($db)
     $stmt->close();
 
     if (!$row) {
-        throw new RuntimeException('Poker settings row is missing. Run poker-maintenance.sql.');
+        throw new RuntimeException('Poker settings row is missing.');
     }
 
     return $row;
@@ -76,7 +76,7 @@ function poker_maintenance_state($db)
     $stmt->close();
 
     if (!$row) {
-        throw new RuntimeException('Poker settings row is missing. Run poker-maintenance.sql.');
+        throw new RuntimeException('Poker settings row is missing.');
     }
 
     return max(0, min(2, (int) $row['maintenance_mode']));
