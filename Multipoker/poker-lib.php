@@ -1349,18 +1349,6 @@ function poker_join($db, $tableId, $seatNo, $buyin, $user)
 
 function poker_touch_presence($db, $tableId, $userId)
 {
-    /*
-     * Presence is a heartbeat, not game state. Most state polls should not
-     * need to lock the shared poker_tables row or every seat at the table.
-     *
-     * Normal path:
-     *   - read only this user's seat
-     *   - refresh last_seen_at at most once per heartbeat interval
-     *
-     * Reconnect-grace path:
-     *   - use the original transactional locking behavior, but lock only the
-     *     table row and this player's seat before restoring the turn timer
-     */
     $stmt = $db->prepare("SELECT seat_no,
                                 reconnect_grace_until,
                                 CASE
